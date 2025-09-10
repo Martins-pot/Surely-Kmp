@@ -34,8 +34,10 @@ import androidx.navigation.compose.rememberNavController
 import com.mertswork.footyreserve.ui.theme.BlackFaded
 import com.mertswork.footyreserve.ui.theme.DarkGrayBackground
 import com.sportmaster.surelykmp.activities.freecodes.presentation.screens.CodesScreen
-import com.sportmaster.surelykmp.di.AppModule
+import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
+//import com.sportmaster.surelykmp.di.AppModule
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import surelykmp.composeapp.generated.resources.Res
 import surelykmp.composeapp.generated.resources.background_texture
 import surelykmp.composeapp.generated.resources.selected_free_codes
@@ -86,15 +88,17 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
     ) {
         //  Background image
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkGrayBackground)
-        )
+//        Box(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .background(DarkGrayBackground)
+//        )
         Image(
             painter = painterResource(Res.drawable.background_texture),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkGrayBackground),
             contentScale = ContentScale.Crop
         )
         Image(
@@ -198,6 +202,7 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
 @Composable
  fun FreeCodes(){
 
-    val viewModel = remember { AppModule.provideCodesViewModel() }
+     val viewModel : CodesViewModel = koinInject()
+//    val viewModel = remember { AppModule.provideCodesViewModel() }
     CodesScreen(viewModel = viewModel)
  }

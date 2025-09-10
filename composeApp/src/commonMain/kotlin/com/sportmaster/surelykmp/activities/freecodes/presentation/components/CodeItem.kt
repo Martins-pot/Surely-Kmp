@@ -44,7 +44,7 @@ fun CodeItem(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = code.username,
+                        text = code.username ?: "",
                         color = Color(0xFF888888),
                         fontSize = 14.sp
                     )

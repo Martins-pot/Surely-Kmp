@@ -1,22 +1,55 @@
 package com.sportmaster.surelykmp.activities.freecodes.data.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+
+//@Serializable
+//data class Code(
+//    val _id: String,
+//    val group_id: String? = null,
+//    val user: String? = null,
+//    val username: String,
+//    val user_id: String,
+//    val image: String? = null,
+//    val odds: Double,
+//    val rating: Double,
+//    val telegram: Boolean = false,
+//    val text: String,
+//    val sport: String
+//)
 
 @Serializable
 data class Code(
-    val _id: String,
-    val group_id: String? = null,
-    val user: String? = null,
-    val username: String,
-    val user_id: String,
-    val image: String? = null,
-    val odds: Double,
-    val rating: Double,
-    val telegram: Boolean = false,
-    val text: String,
-    val sport: String
-)
+    @SerialName("_id") val _id: String?,
+    @SerialName("group_id") val group_id: String?,
+    @SerialName("user") val user: String?,
+    @SerialName("username") val username: String?,
+    @SerialName("user_id") val user_id: String?,
+    @SerialName("source_accuracy") val accuracy: Int?,
+    @SerialName("platform") val platform: String?,
+    @SerialName("odds") val odds: Double,
+    @SerialName("rating") val rating: Double,
+    @SerialName("telegram") val telegram: Boolean,
+    @SerialName("is_expensive") val isExpensive: Boolean,
+    @SerialName("code_type") val sport: String?,
+    @SerialName("text") val text: String,
+    @SerialName("createdAt") val createdAt: String?,
+    @SerialName("ratings") val ratings: List<Double>,
+    @SerialName("comments") val comments: MutableList<Comment>,
+    @SerialName("expiration_date") val expirationDate: String?,
+    @SerialName("country") val country: String?,
+    @SerialName("team1") val team1: String?,
+    @SerialName("team2") val team2: String?)
 
+@Serializable
+data class Comment(
+    @SerialName("user") val user: String?,
+    @SerialName("comment") val comment: String?,
+    @SerialName("createdAt") val createdAt: String?,
+    @SerialName("image") val image: String?
+)
+//
+//)
 //data class Codess(
 //    @Json(name = "_id") val id: String?,
 //    @Json(name = "group_id") val groupId: String?,
@@ -38,7 +71,3 @@ data class Code(
 //    @Json(name = "country") val country: String?,
 //    @Json(name = "team1") val team1: String?,
 //    @Json(name = "team2") val team2: String?
-//
-//
-//
-//)

@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
 import com.sportmaster.surelykmp.activities.freecodes.domain.model.Sport
 import com.sportmaster.surelykmp.activities.freecodes.domain.usecase.GetCodesUseCase
+import com.sportmaster.surelykmp.core.data.remote.DataError
+import com.sportmaster.surelykmp.core.data.remote.Result
 import kotlinx.coroutines.launch
 
 class CodesViewModel(
@@ -34,17 +36,34 @@ class CodesViewModel(
         loadCodes()
     }
 
+    fun retry() {
+        loadCodes()
+    }
+
     private fun loadCodes() {
         viewModelScope.launch {
             isLoading = true
             error = null
-            try {
-                codes = getCodesUseCase.execute(selectedSport)
-            } catch (e: Exception) {
-                error = "Failed to load codes: ${e.message}"
-            } finally {
-                isLoading = false
+
+            when (val result = getCodesUseCase.execute(selectedSport)) {
+                is Result.Success -> {
+                    codes = result.data
+                    error = null
+                }
+                is Result.Error -> {
+                    codes = emptyList()
+                    error = when (result.error) {
+                        DataError.Remote.NO_INTERNET -> "No internet connection"
+                        DataError.Remote.REQUEST_TIMEOUT -> "Request timeout"
+                        DataError.Remote.SERVER -> "Server error"
+                        DataError.Remote.SERIALIZATION -> "Data parsing error"
+                        DataError.Remote.TOO_MANY_REQUESTS -> "Too many requests"
+                        DataError.Remote.UNKNOWN -> "Unknown error occurred"
+                    }
+                }
             }
+
+            isLoading = false
         }
     }
 }

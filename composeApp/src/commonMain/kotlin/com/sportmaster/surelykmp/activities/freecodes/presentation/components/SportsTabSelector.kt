@@ -1,6 +1,7 @@
 package com.sportmaster.surelykmp.activities.freecodes.presentation.components
 
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sportmaster.surelykmp.activities.freecodes.domain.model.Sport
+import org.jetbrains.compose.resources.painterResource
+import surelykmp.composeapp.generated.resources.Res
+import surelykmp.composeapp.generated.resources.selected_basketball
+import surelykmp.composeapp.generated.resources.selected_football
+import surelykmp.composeapp.generated.resources.selected_tennis
+import surelykmp.composeapp.generated.resources.unselected_basketball
+import surelykmp.composeapp.generated.resources.unselected_football
+import surelykmp.composeapp.generated.resources.unselected_tennis
 
 
 @Composable
@@ -32,7 +41,7 @@ fun SportTabSelector(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(50.dp)
+                    .height(55.dp)
                     .background(
                         color = if (isSelected) Color(0xFFE53935) else Color(0xFF2A2A2A),
                         shape = when (sport) {
@@ -54,14 +63,36 @@ fun SportTabSelector(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = when (sport) {
-                            Sport.FOOTBALL -> "⚽"
-                            Sport.BASKETBALL -> "🏀"
-                            Sport.TENNIS -> "🎾"
+                    Image(
+                        painter = when (sport) {
+                            Sport.FOOTBALL -> if (isSelected) {
+                                painterResource(Res.drawable.selected_football)
+                            } else {
+                                painterResource(Res.drawable.unselected_football)
+                            }
+                            Sport.BASKETBALL -> if (isSelected) {
+                                painterResource(Res.drawable.selected_basketball)
+                            } else {
+                                painterResource(Res.drawable.unselected_basketball)
+                            }
+                            Sport.TENNIS -> if (isSelected) {
+                                painterResource(Res.drawable.selected_tennis)
+                            } else {
+                                painterResource(Res.drawable.unselected_tennis)
+                            }
                         },
-                        fontSize = 16.sp
+                        contentDescription = sport.displayName,
+                        modifier = Modifier
+                            .size(36.dp)
                     )
+//                    Text(
+//                        text = when (sport) {
+//                            Sport.FOOTBALL -> "⚽"
+//                            Sport.BASKETBALL -> "🏀"
+//                            Sport.TENNIS -> "🎾"
+//                        },
+//                        fontSize = 16.sp
+//                    )
 
                     Text(
                         text = sport.displayName,
