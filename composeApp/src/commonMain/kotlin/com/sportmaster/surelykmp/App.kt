@@ -30,7 +30,7 @@ import surelykmp.composeapp.generated.resources.compose_multiplatform
 fun App() {
 
     val navController = rememberNavController()
-    FootyReserveTheme {
+
         NavHost(
             navController = navController,
             startDestination = "main/free"
@@ -41,5 +41,5 @@ fun App() {
             }
 
         }
-    }
+
 }

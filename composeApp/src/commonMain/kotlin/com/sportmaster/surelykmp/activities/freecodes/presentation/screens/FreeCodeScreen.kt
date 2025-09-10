@@ -27,7 +27,6 @@ fun CodesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A1A))
             .padding(16.dp)
     ) {
         // Header
