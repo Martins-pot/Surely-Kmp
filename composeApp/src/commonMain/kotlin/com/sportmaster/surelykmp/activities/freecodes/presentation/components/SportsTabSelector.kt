@@ -39,10 +39,10 @@ fun SportTabSelector(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(55.dp)
+            .height(56.dp)
             .border(
-                width = 1.5.dp,
-                color = Color.White.copy(.2f),
+                width = 2.dp,
+                color = Color.White.copy(.24f),
                 shape = RoundedCornerShape(10.dp) // outer rounded border
             )
     ) {
@@ -52,7 +52,7 @@ fun SportTabSelector(
             Sport.values().forEachIndexed { index, sport ->
                 val isSelected = sport == selectedSport
 
-                // 🔹 Animate colors
+                //  Animate colors
                 val backgroundColor by animateColorAsState(
                     targetValue = if (isSelected) Color(0xFFD52127) else Color.Transparent,
                     animationSpec = tween(durationMillis = 600)
@@ -65,7 +65,7 @@ fun SportTabSelector(
 
                 //  Optional scale animation for subtle "pop"
                 val scale by animateFloatAsState(
-                    targetValue = if (isSelected) 1.1f else 1f,
+                    targetValue = if (isSelected) 1.1f else .9f,
                     animationSpec = tween(durationMillis = 700)
                 )
 

@@ -44,19 +44,19 @@ fun CodesScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Row {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Calendar",
-                    tint = Color.White,
-                    modifier = Modifier.padding(end = 12.dp)
-                )
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = "Crown",
-                    tint = Color(0xFFFFD700)
-                )
-            }
+//            Row {
+//                Icon(
+//                    imageVector = Icons.Default.DateRange,
+//                    contentDescription = "Calendar",
+//                    tint = Color.White,
+//                    modifier = Modifier.padding(end = 12.dp)
+//                )
+//                Icon(
+//                    imageVector = Icons.Default.Star,
+//                    contentDescription = "Crown",
+//                    tint = Color(0xFFFFD700)
+//                )
+//            }
         }
 
         // Sport Tabs
@@ -118,8 +118,11 @@ fun CodesScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(viewModel.codes) { code ->
-                        CodeItem(code = code)
+                    items(viewModel.codes.filter { !it.isExpensive }) { code ->
+                        CodeItem(
+                            code = code,
+                            onShare = {},
+                            onItemClick = {})
                     }
                 }
             }

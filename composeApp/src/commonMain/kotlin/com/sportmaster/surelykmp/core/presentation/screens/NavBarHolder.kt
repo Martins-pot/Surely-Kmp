@@ -88,17 +88,17 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
     ) {
         //  Background image
 
-//        Box(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(DarkGrayBackground)
-//        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkGrayBackground)
+        )
         Image(
             painter = painterResource(Res.drawable.background_texture),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkGrayBackground),
+            ,
             contentScale = ContentScale.Crop
         )
         Image(
@@ -107,6 +107,12 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+//        Image(
+//            painter = painterResource(Res.drawable.background_texture),
+//            contentDescription = null,
+//            modifier = Modifier.fillMaxSize(),
+//            contentScale = ContentScale.Crop
+//        )
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
