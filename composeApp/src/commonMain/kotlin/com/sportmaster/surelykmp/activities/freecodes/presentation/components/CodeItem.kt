@@ -24,6 +24,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +42,23 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import surelykmp.composeapp.generated.resources.Icon_comment
 import surelykmp.composeapp.generated.resources.Res
+import surelykmp.composeapp.generated.resources._xbet
+import surelykmp.composeapp.generated.resources.bet9ja
+import surelykmp.composeapp.generated.resources.betfigo
+import surelykmp.composeapp.generated.resources.betking_me
+import surelykmp.composeapp.generated.resources.betway
+import surelykmp.composeapp.generated.resources.cameroon
+import surelykmp.composeapp.generated.resources.ghana
+import surelykmp.composeapp.generated.resources.kenya
+import surelykmp.composeapp.generated.resources.livescorebet
+import surelykmp.composeapp.generated.resources.megapari
+import surelykmp.composeapp.generated.resources.ng234bet
+import surelykmp.composeapp.generated.resources.nigeria
+import surelykmp.composeapp.generated.resources.south_africa
+import surelykmp.composeapp.generated.resources.sportytext
+import surelykmp.composeapp.generated.resources.tanzania
+import surelykmp.composeapp.generated.resources.uganda
+import surelykmp.composeapp.generated.resources.world
 import kotlin.math.round
 
 @Composable
@@ -592,47 +611,159 @@ private fun AccuracySection(
 
 @Composable
 private fun PlatformImage(platform: String?) {
-    // This is a placeholder - you'll need to implement platform-specific images
-    // For now, showing platform text if no specific image is available
-    when (platform) {
-        "sportybet" -> {
-            // SportyBet logo placeholder
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .height(23.dp)
-                    .background(Color.Gray, RoundedCornerShape(4.dp)),
-                contentAlignment = Alignment.Center
-            ) {
+    val grayFilter = ColorFilter.tint(Color.Gray)
+
+    when (platform?.lowercase()) {
+        "1xbet" -> Image(
+            painter = painterResource(Res.drawable._xbet),
+            contentDescription = "1xbet",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+//        "1win" -> Image(
+//            painter = painterResource(Res.drawable._win),
+//            contentDescription = "1win",
+//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+//            colorFilter = grayFilter
+//        )
+        "sportybet" -> Image(
+            painter = painterResource(Res.drawable.sportytext),
+            contentDescription = "SportyBet",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+        "bet9ja" -> Image(
+            painter = painterResource(Res.drawable.bet9ja),
+            contentDescription = "Bet9ja",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+        "betking" -> Image(
+            painter = painterResource(Res.drawable.betking_me),
+            contentDescription = "Betking",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+        "betway" -> Image(
+            painter = painterResource(Res.drawable.betway),
+            contentDescription = "Betway",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+        "livescorebet" -> Image(
+            painter = painterResource(Res.drawable.livescorebet),
+            contentDescription = "Livescorebet",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+        "megapari" -> Image(
+            painter = painterResource(Res.drawable.megapari),
+            contentDescription = "Megapari",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+//        "nairabet" -> Image(
+//            painter = painterResource(Res.drawable.nairabet),
+//            contentDescription = "NairaBet",
+//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+//            colorFilter = grayFilter
+//        )
+        "betfigo" -> Image(
+            painter = painterResource(Res.drawable.betfigo),
+            contentDescription = "BetFigo",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+//        "melbet" -> Image(
+//            painter = painterResource(Res.drawable.melbet),
+//            contentDescription = "Melbet",
+//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+//            colorFilter = grayFilter
+//        )
+        "ng234bet" -> Image(
+            painter = painterResource(Res.drawable.ng234bet),
+            contentDescription = "NG234Bet",
+            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+            colorFilter = grayFilter
+        )
+//        "pinnacle" -> Image(
+//            painter = painterResource(Res.drawable.pinnacle),
+//            contentDescription = "Pinnacle",
+//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
+//            colorFilter = grayFilter
+//        )
+
+        else -> {
+            if (!platform.isNullOrBlank()) {
                 Text(
-                    text = "SportyBet",
+                    text = platform,
                     style = TextStyle(
-                        fontSize = 10.sp,
-                        color = Color.White
-                    )
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF7F7F7F)
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-        }
-        else -> {
-            Text(
-                text = platform ?: "",
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF7F7F7F)
-                )
-            )
         }
     }
 }
 
+//@Composable
+//private fun PlatformImage(platform: String?) {
+//    // This is a placeholder - you'll need to implement platform-specific images
+//    // For now, showing platform text if no specific image is available
+//    when (platform) {
+//        "sportybet" -> {
+//            // SportyBet logo placeholder
+//            Box(
+//                modifier = Modifier
+//                    .width(80.dp)
+//                    .height(23.dp)
+//                    .background(Color.Gray, RoundedCornerShape(4.dp)),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Text(
+//                    text = "SportyBet",
+//                    style = TextStyle(
+//                        fontSize = 10.sp,
+//                        color = Color.White
+//                    )
+//                )
+//            }
+//        }
+//        else -> {
+//            Text(
+//                text = platform ?: "",
+//                style = TextStyle(
+//                    fontSize = 16.sp,
+//                    fontWeight = FontWeight.Medium,
+//                    color = Color(0xFF7F7F7F)
+//                )
+//            )
+//        }
+//    }
+//}
+
 @Composable
 private fun CountryFlag(country: String?) {
-    // Placeholder for country flags - implement with actual flag images
-    Box(
-        modifier = Modifier
-            .size(15.dp)
-            .background(Color.Gray, androidx.compose.foundation.shape.CircleShape)
+    val painter = when (country) {
+        "Nigeria" -> painterResource(Res.drawable.nigeria)
+        "Cameroon" -> painterResource(Res.drawable.cameroon)
+        "Ghana" -> painterResource(Res.drawable.ghana)
+        "Kenya" -> painterResource(Res.drawable.kenya)
+        "South Africa" -> painterResource(Res.drawable.south_africa)
+        "Tanzania" -> painterResource(Res.drawable.tanzania)
+        "Uganda" -> painterResource(Res.drawable.uganda)
+        else -> painterResource(Res.drawable.world)
+    }
+
+    Image(
+        painter = painter,
+        contentDescription = country ?: "World",
+        modifier = Modifier.size(16.dp),
+        contentScale = ContentScale.Fit
     )
 }
 

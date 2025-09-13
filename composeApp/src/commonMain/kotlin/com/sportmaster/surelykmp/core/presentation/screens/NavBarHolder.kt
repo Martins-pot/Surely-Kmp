@@ -35,6 +35,7 @@ import com.mertswork.footyreserve.ui.theme.BlackFaded
 import com.mertswork.footyreserve.ui.theme.DarkGrayBackground
 import com.sportmaster.surelykmp.activities.freecodes.presentation.screens.CodesScreen
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
+import com.sportmaster.surelykmp.activities.premiumcodes.presentation.screens.CodesScreenPremium
 //import com.sportmaster.surelykmp.di.AppModule
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -196,7 +197,7 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
             ) {
                 composable(Screen.FreeCodes.route) { FreeCodes() }
                 composable(Screen.Matches.route) { FreeCodes() }
-                composable(Screen.PremiumCodes.route) { FreeCodes() }
+                composable(Screen.PremiumCodes.route) { PremiumCodes() }
             }
         }
     }
@@ -212,3 +213,11 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
 //    val viewModel = remember { AppModule.provideCodesViewModel() }
     CodesScreen(viewModel = viewModel)
  }
+
+@Composable
+fun PremiumCodes(){
+
+    val viewModel : CodesViewModel = koinInject()
+//    val viewModel = remember { AppModule.provideCodesViewModel() }
+    CodesScreenPremium(viewModel = viewModel)
+}
