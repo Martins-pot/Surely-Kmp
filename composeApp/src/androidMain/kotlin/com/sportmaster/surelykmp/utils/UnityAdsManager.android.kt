@@ -19,9 +19,11 @@ actual class UnityAdsManager(private val context: Context) {
     private val adReadyMap = mutableMapOf<String, Boolean>()
 
     actual fun initializeAds(gameId: String) {
-        UnityAds.initialize(context, gameId, true,
+        UnityAds.initialize(context, gameId, testMode = true,
             object : IUnityAdsInitializationListener {
-                override fun onInitializationComplete() {}
+                override fun onInitializationComplete() {
+
+                }
                 override fun onInitializationFailed(
                     error: UnityAds.UnityAdsInitializationError?,
                     message: String?

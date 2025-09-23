@@ -51,7 +51,7 @@ class PremiumCodesViewModel(
 
     // Ad configuration
     private val adPlacementId = "Rewarded_Android"
-    private val gameId = "5943123"
+    private val gameId = "5952135"
 
     // Preferences keys
     private val START_TIME_KEY = "premium_start_time"
