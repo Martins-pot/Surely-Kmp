@@ -40,6 +40,8 @@ class CodesViewModel(
         loadCodes()
     }
 
+
+
     private fun loadCodes() {
         viewModelScope.launch {
             isLoading = true

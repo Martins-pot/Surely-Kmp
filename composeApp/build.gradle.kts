@@ -46,6 +46,7 @@ kotlin {
             implementation(libs.androidx.activity.compose.v182)
 
             implementation(libs.androidx.security.crypto)
+            implementation("com.unity3d.ads:unity-ads:4.16.1")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
