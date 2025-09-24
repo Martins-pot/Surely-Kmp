@@ -201,7 +201,10 @@ private fun CodeTypeLayout(
     copyScale: Float,
     shareScale: Float
 ) {
-    Column {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 20.dp)
+    ) {
         // Source accuracy section
         if (code.accuracy != null && code.isExpensive) {
             AccuracySection(
@@ -270,14 +273,14 @@ private fun CodeTypeLayout(
                     Spacer(modifier = Modifier.width(10.dp))
 
                     // Share button
-                    Image(
-                        imageVector = ShareIcon(),
-                        contentDescription = "Share",
-                        modifier = Modifier
-                            .scale(shareScale)
-                            .clickable { onShare(code.text) },
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
-                    )
+//                    Image(
+//                        imageVector = ShareIcon(),
+//                        contentDescription = "Share",
+//                        modifier = Modifier
+//                            .scale(shareScale)
+//                            .clickable { onShare(code.text) },
+//                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
+//                    )
 
                     Spacer(modifier = Modifier.width(10.dp))
 
@@ -368,7 +371,7 @@ private fun PredictionTypeLayout(
     shareScale: Float
 ) {
     Column(
-        modifier = Modifier.padding( vertical = 20.dp)
+        modifier = Modifier.padding( 20.dp)
     ) {
         // Top row with rating and date
         Row(
@@ -537,15 +540,15 @@ private fun PredictionTypeLayout(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                // Share button
-                Image(
-                    imageVector = ShareIcon(),
-                    contentDescription = "Share",
-                    modifier = Modifier
-                        .scale(shareScale)
-                        .clickable { onShare(formattedCode) },
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
-                )
+//                // Share button
+//                Image(
+//                    imageVector = ShareIcon(),
+//                    contentDescription = "Share",
+//                    modifier = Modifier
+//                        .scale(shareScale)
+//                        .clickable { onShare(formattedCode) },
+//                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
+//                )
 
                 Spacer(modifier = Modifier.width(10.dp))
 

@@ -27,7 +27,7 @@ fun CodesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(vertical = 16.dp)
     ) {
         // Header
         Row(
@@ -38,6 +38,8 @@ fun CodesScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp),
                 text = "CODES",
                 color = Color.White,
                 fontSize = 24.sp,
@@ -62,7 +64,9 @@ fun CodesScreen(
         // Sport Tabs
         SportTabSelector(
             selectedSport = viewModel.selectedSport,
-            onSportSelected = { viewModel.selectSport(it) }
+            onSportSelected = { viewModel.selectSport(it) },
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
         )
 
         Spacer(modifier = Modifier.height(20.dp))

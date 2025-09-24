@@ -28,14 +28,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.mertswork.footyreserve.ui.theme.BlackFaded
 import com.mertswork.footyreserve.ui.theme.DarkGrayBackground
 import com.sportmaster.surelykmp.activities.freecodes.presentation.screens.CodesScreen
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.PremiumCodesViewModel
+import com.sportmaster.surelykmp.activities.matches.presentation.screens.AiPredictionsScreen
+import com.sportmaster.surelykmp.activities.matches.presentation.screens.MatchesScreen
+import com.sportmaster.surelykmp.activities.matches.presentation.viewmodel.MatchesViewModel
 import com.sportmaster.surelykmp.activities.premiumcodes.presentation.screens.CodesScreenPremium
 //import com.sportmaster.surelykmp.di.AppModule
 import org.jetbrains.compose.resources.painterResource
@@ -58,6 +64,9 @@ data class BottomNavigationItem(
     val hasNews : Boolean,
     val badgeCount : Int? = null
 )
+fun NavController.navigateToAiPredictions(matchId: String) {
+    navigate("${Screen.AiPredictions.route}/$matchId")
+}
 
 @Composable
 fun MainScreen(startDestination: String = Screen.FreeCodes.route){
@@ -197,8 +206,19 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
                 modifier = Modifier.padding(paddingValues)
             ) {
                 composable(Screen.FreeCodes.route) { FreeCodes() }
-                composable(Screen.Matches.route) { FreeCodes() }
+                composable(Screen.Matches.route) { Matches(navController) }
                 composable(Screen.PremiumCodes.route) { PremiumCodes() }
+
+                composable(Screen.Matches.route) {
+                    Matches(navController = navController)
+                }
+                composable(
+                    route = "${Screen.AiPredictions.route}/{matchId}",
+                    arguments = listOf(navArgument("matchId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val matchId = backStackEntry.arguments?.getString("matchId") ?: ""
+                    AiPredictions(matchId = matchId, navController = navController)
+                }
             }
         }
     }
@@ -219,4 +239,32 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
 fun PremiumCodes() {
     val viewModelPremium: PremiumCodesViewModel = koinInject()
     CodesScreenPremium(viewModel = viewModelPremium)
+}
+
+@Composable
+fun Matches(navController: NavController) {
+    val viewModel: MatchesViewModel = koinInject() // or viewModel()
+    MatchesScreen(
+        navController = navController,
+        viewModel = viewModel
+    )
+}
+
+@Composable
+fun AiPredictions(
+    matchId: String,
+    navController: NavController
+) {
+    val viewModel: MatchesViewModel = koinInject() // or viewModel()
+    AiPredictionsScreen(
+        matchId = matchId,
+        onBackClick = {
+            navController.popBackStack()
+        },
+        isSubscribed = false, // Get from your subscription manager
+        onSubscribeClick = {
+            navController.navigate(Screen.Subscription.route)
+        },
+        viewModel = viewModel
+    )
 }

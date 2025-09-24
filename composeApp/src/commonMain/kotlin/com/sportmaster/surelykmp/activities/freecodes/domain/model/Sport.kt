@@ -5,3 +5,4 @@ enum class Sport(val displayName: String, val apiValue: String) {
     BASKETBALL("Basketball", "basketball"),
     TENNIS("Tennis", "tennis")
 }
+

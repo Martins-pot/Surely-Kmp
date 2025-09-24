@@ -45,6 +45,7 @@ fun SportTabSelector(
                 color = Color.White.copy(.24f),
                 shape = RoundedCornerShape(10.dp) // outer rounded border
             )
+
     ) {
         Row(
             modifier = Modifier.fillMaxSize()

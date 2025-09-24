@@ -133,12 +133,15 @@ package com.sportmaster.surelykmp.activities.premiumcodes.presentation.screens
 
 
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -147,6 +150,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -159,6 +164,9 @@ import com.sportmaster.surelykmp.activities.freecodes.presentation.components.Sp
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.PremiumCodesViewModel
 import com.sportmaster.surelykmp.utils.UnityAdsManager
+import org.jetbrains.compose.resources.painterResource
+import surelykmp.composeapp.generated.resources.Res
+import surelykmp.composeapp.generated.resources.background_texture
 
 @Composable
 fun CodesScreenPremium(
@@ -171,12 +179,8 @@ fun CodesScreenPremium(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .then(
-                    if (premiumState.isBlurActive && !premiumState.isSubscribed)
-                        Modifier.blur(radius = 10.dp)
-                    else Modifier
-                )
+                .padding(vertical = 16.dp)
+
         ) {
             // Header
             Row(
@@ -187,6 +191,8 @@ fun CodesScreenPremium(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
+                    modifier = Modifier
+                    .padding(horizontal = 20.dp),
                     text = "PREMIUM CODES",
                     color = Color.White,
                     fontSize = 24.sp,
@@ -197,7 +203,10 @@ fun CodesScreenPremium(
             // Sport Tabs
             SportTabSelector(
                 selectedSport = viewModel.selectedSport,
-                onSportSelected = { viewModel.selectSport(it) }
+                onSportSelected = { viewModel.selectSport(it)
+                },
+                modifier = Modifier
+                        .padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -208,7 +217,7 @@ fun CodesScreenPremium(
                     timeRemaining = premiumState.timeRemaining,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
                 )
             }
 
@@ -250,45 +259,246 @@ fun CodesScreenPremium(
                 }
                 viewModel.codes.isEmpty() -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize()
+                        .then(
+                                if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive)
+                                    Modifier.blur(radius = 2.dp)
+                                else Modifier
+                                ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "No premium codes available for ${viewModel.selectedSport.displayName}",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center
-                        )
+                        Column {
+                            Spacer(
+                                modifier = Modifier.height(70.dp)
+                            )
+                            Text(
+                                text = "No premium codes available for ${viewModel.selectedSport.displayName}",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
                     }
                 }
                 else -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(
+                                if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive)
+                                    Modifier.blur(radius = 4.dp)
+                                else Modifier
+                            )
+                    ) {
+                        if (premiumState.isBlurActive && !premiumState.isSubscribed) {
+                        Image(
+                            painter = painterResource(Res.drawable.background_texture),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )}
                     LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+//                        modifier = Modifier
+//                            .then(
+//                                if (premiumState.isBlurActive && !premiumState.isSubscribed)
+//                                    Modifier.blur(radius = 5.dp)
+//                                else Modifier
+//                            )
+
                     ) {
                         items(viewModel.codes) { code ->
                             CodeItem(
                                 code = code,
                                 onShare = {},
-                                onItemClick = {}
+                                onItemClick = {},
+
                             )
                         }
                     }
                 }
             }
+            }
         }
 
-        // Blur overlay with upgrade dialog
-        if (premiumState.isBlurActive && !premiumState.isSubscribed) {
-            BlurOverlay(
-                onWatchAd = {
-                    viewModel.onWatchAdClicked()
-                },
-                onUpgrade = {
-                    // Handle upgrade navigation
+        if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive) {
+            // Match the LazyColumn’s area: here we just overlay the whole Box but
+            // we allow touches to “pass through” except on the card itself.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {} // consume clicks to block LazyColumn
+            ) {
+                // Center the upgrade card
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(vertical = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                ) {
+                    PremiumDialogContent(
+                        onWatchAd = { viewModel.onWatchAdClicked() },
+                        onUpgrade = { /* navigate to upgrade */ }
+                    )
                 }
-            )
+            }
         }
     }
+}
+//        // Blur overlay with upgrade dialog
+//        if (premiumState.isBlurActive && !premiumState.isSubscribed) {
+//            BlurOverlay(
+//                onWatchAd = {
+//                    viewModel.onWatchAdClicked()
+//                },
+//                onUpgrade = {
+//                    // Handle upgrade navigation
+//                }
+//            )
+//        }
+//    }
+//}
+
+
+@Composable
+private fun PremiumDialogContent(
+    onWatchAd: () -> Unit,
+    onUpgrade: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .padding(25.dp)
+            .wrapContentSize()
+            .border(
+                width = .5.dp,
+                color = Color.White.copy(.4f),
+                shape = RoundedCornerShape(16.dp)
+            )
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                ,
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Red.copy(.15f)
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Crown icon
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Unlock",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .padding(bottom = 16.dp)
+                )
+
+                // Title
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Unlock",
+                        color = Color.White,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFE53935)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "PRO Codes",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Description
+                Text(
+                    text = "Expert codes are locked for free users",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Watch ads button
+                Button(
+                    onClick = onWatchAd,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(.18f)
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Play Ad",
+                        tint = Color.White,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "Watch ads to unlock for 20 minutes",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+//            // Upgrade button
+//            Button(
+//                onClick = onUpgrade,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(50.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = Color.White
+//                ),
+//                shape = RoundedCornerShape(10.dp)
+//            ) {
+//                Icon(
+//                    imageVector = Icons.Default.Star,
+//                    contentDescription = "Crown",
+//                    tint = Color.Black,
+//                    modifier = Modifier.padding(end = 8.dp)
+//                )
+//                Text(
+//                    text = "Upgrade to pro for just ₦1800",
+//                    color = Color.Black,
+//                    fontSize = 14.sp,
+//                    fontWeight = FontWeight.Bold
+//                )
+//            }
+            }
+        }
+    }
+
 }
 
 @Composable
