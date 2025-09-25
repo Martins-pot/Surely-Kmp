@@ -43,6 +43,7 @@ kotlin {
 //            added
             implementation(libs.ktor.client.android)
             implementation(libs.coil.kt.coil.compose)
+            implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0-alpha06")
             implementation(libs.androidx.activity.compose.v182)
 
             implementation(libs.androidx.security.crypto)

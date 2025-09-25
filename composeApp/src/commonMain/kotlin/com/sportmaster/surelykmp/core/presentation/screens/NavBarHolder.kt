@@ -250,21 +250,40 @@ fun Matches(navController: NavController) {
     )
 }
 
+
+
 @Composable
 fun AiPredictions(
     matchId: String,
     navController: NavController
 ) {
-    val viewModel: MatchesViewModel = koinInject() // or viewModel()
+    val viewModel: MatchesViewModel = koinInject()
     AiPredictionsScreen(
         matchId = matchId,
         onBackClick = {
             navController.popBackStack()
         },
-        isSubscribed = false, // Get from your subscription manager
         onSubscribeClick = {
             navController.navigate(Screen.Subscription.route)
         },
         viewModel = viewModel
     )
 }
+//@Composable
+//fun AiPredictions(
+//    matchId: String,
+//    navController: NavController
+//) {
+//    val viewModel: MatchesViewModel = koinInject() // or viewModel()
+//    AiPredictionsScreen(
+//        matchId = matchId,
+//        onBackClick = {
+//            navController.popBackStack()
+//        },
+//        isSubscribed = false, // Get from your subscription manager
+//        onSubscribeClick = {
+//            navController.navigate(Screen.Subscription.route)
+//        },
+//        viewModel = viewModel
+//    )
+//}

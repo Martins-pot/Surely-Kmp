@@ -38,6 +38,13 @@ val sharedModule = module {
     // ViewModels
     viewModel { CodesViewModel(get()) }
     viewModel { PremiumCodesViewModel(get(), get(), get()) }
-    viewModel { MatchesViewModel(get(), get()) }
-
+//    viewModel { MatchesViewModel(get(), get()) }
+    viewModel {
+        MatchesViewModel(
+            getMatchesUseCase = get(),
+            getPredictionUseCase = get(),
+            unityAdsManager = get(),
+            preferencesManager = get()
+        )
+    }
 }
