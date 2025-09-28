@@ -20,116 +20,257 @@ import com.sportmaster.surelykmp.activities.freecodes.presentation.components.Co
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.SportTabSelector
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
 
+
+
+
 @Composable
 fun CodesScreen(
     viewModel: CodesViewModel
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(vertical = 16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Header
-        Row(
+        // Main content in a Column with weight
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .weight(1f)
+                .padding(vertical = 16.dp)
         ) {
-            Text(
+            // Header
+            Row(
                 modifier = Modifier
-                    .padding(horizontal = 20.dp),
-                text = "CODES",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                    .fillMaxWidth()
+                    .padding(bottom = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp),
+                    text = "CODES",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Sport Tabs
+            SportTabSelector(
+                selectedSport = viewModel.selectedSport,
+                onSportSelected = { viewModel.selectSport(it) },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
             )
 
-//            Row {
-//                Icon(
-//                    imageVector = Icons.Default.DateRange,
-//                    contentDescription = "Calendar",
-//                    tint = Color.White,
-//                    modifier = Modifier.padding(end = 12.dp)
-//                )
-//                Icon(
-//                    imageVector = Icons.Default.Star,
-//                    contentDescription = "Crown",
-//                    tint = Color(0xFFFFD700)
-//                )
-//            }
-        }
+            Spacer(modifier = Modifier.height(20.dp))
 
-        // Sport Tabs
-        SportTabSelector(
-            selectedSport = viewModel.selectedSport,
-            onSportSelected = { viewModel.selectSport(it) },
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Content
-        when {
-            viewModel.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFFE53935))
+            // Content
+            when {
+                viewModel.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFFE53935))
+                    }
                 }
-            }
-            viewModel.error != null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                viewModel.error != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = viewModel.error!!,
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { viewModel.retry() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFE53935)
+                                )
+                            ) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                }
+                viewModel.codes.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = viewModel.error!!,
+                            text = "No codes available for ${viewModel.selectedSport.displayName}",
                             color = Color.White,
                             fontSize = 16.sp
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { /* Retry logic */ },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE53935)
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+//                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        items(viewModel.codes.filter { !it.isExpensive }) { code ->
+                            CodeItem(
+                                code = code,
+                                onShare = {},
+                                onItemClick = {}
                             )
-                        ) {
-                            Text("Retry")
+                        }
+
+                        // Add some bottom padding to ensure content doesn't get cut off by banner
+                        item {
+                            Spacer(modifier = Modifier.height(60.dp))
                         }
                     }
                 }
             }
-            viewModel.codes.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No codes available for ${viewModel.selectedSport.displayName}",
-                        color = Color.White,
-                        fontSize = 16.sp
-                    )
-                }
-            }
-            else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(viewModel.codes.filter { !it.isExpensive }) { code ->
-                        CodeItem(
-                            code = code,
-                            onShare = {},
-                            onItemClick = {})
-                    }
-                }
-            }
         }
+
+        // Banner Ad at the bottom
+        UnityBannerAd(
+            placementId = "Banner_Android",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+        )
     }
 }
+
+@Composable
+fun UnityBannerAd(
+    placementId: String,
+    modifier: Modifier = Modifier
+) {
+    // Platform-specific banner ad implementation
+    PlatformBannerAd(
+        placementId = placementId,
+        modifier = modifier
+    )
+}
+
+// This will be implemented differently for each platform
+@Composable
+expect fun PlatformBannerAd(
+    placementId: String,
+    modifier: Modifier = Modifier
+)
+//@Composable
+//fun CodesScreen(
+//    viewModel: CodesViewModel
+//) {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(vertical = 16.dp)
+//    ) {
+//        // Header
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(bottom = 20.dp),
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Text(
+//                modifier = Modifier
+//                    .padding(horizontal = 20.dp),
+//                text = "CODES",
+//                color = Color.White,
+//                fontSize = 24.sp,
+//                fontWeight = FontWeight.Bold
+//            )
+//
+////            Row {
+////                Icon(
+////                    imageVector = Icons.Default.DateRange,
+////                    contentDescription = "Calendar",
+////                    tint = Color.White,
+////                    modifier = Modifier.padding(end = 12.dp)
+////                )
+////                Icon(
+////                    imageVector = Icons.Default.Star,
+////                    contentDescription = "Crown",
+////                    tint = Color(0xFFFFD700)
+////                )
+////            }
+//        }
+//
+//        // Sport Tabs
+//        SportTabSelector(
+//            selectedSport = viewModel.selectedSport,
+//            onSportSelected = { viewModel.selectSport(it) },
+//            modifier = Modifier
+//                .padding(horizontal = 16.dp)
+//        )
+//
+//        Spacer(modifier = Modifier.height(20.dp))
+//
+//        // Content
+//        when {
+//            viewModel.isLoading -> {
+//                Box(
+//                    modifier = Modifier.fillMaxSize(),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    CircularProgressIndicator(color = Color(0xFFE53935))
+//                }
+//            }
+//            viewModel.error != null -> {
+//                Box(
+//                    modifier = Modifier.fillMaxSize(),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Column(
+//                        horizontalAlignment = Alignment.CenterHorizontally
+//                    ) {
+//                        Text(
+//                            text = viewModel.error!!,
+//                            color = Color.White,
+//                            fontSize = 16.sp
+//                        )
+//                        Spacer(modifier = Modifier.height(16.dp))
+//                        Button(
+//                            onClick = { /* Retry logic */ },
+//                            colors = ButtonDefaults.buttonColors(
+//                                containerColor = Color(0xFFE53935)
+//                            )
+//                        ) {
+//                            Text("Retry")
+//                        }
+//                    }
+//                }
+//            }
+//            viewModel.codes.isEmpty() -> {
+//                Box(
+//                    modifier = Modifier.fillMaxSize(),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Text(
+//                        text = "No codes available for ${viewModel.selectedSport.displayName}",
+//                        color = Color.White,
+//                        fontSize = 16.sp
+//                    )
+//                }
+//            }
+//            else -> {
+//                LazyColumn(
+//                    verticalArrangement = Arrangement.spacedBy(12.dp)
+//                ) {
+//                    items(viewModel.codes.filter { !it.isExpensive }) { code ->
+//                        CodeItem(
+//                            code = code,
+//                            onShare = {},
+//                            onItemClick = {})
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}

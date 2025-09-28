@@ -9,4 +9,7 @@ expect class UnityAdsManager {
         onAdFailed: (String) -> Unit
     )
     fun isAdReady(placementId: String): Boolean
+
+    fun loadBannerAd(placementId: String)
+    fun isBannerReady(placementId: String): Boolean
 }

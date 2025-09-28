@@ -36,7 +36,7 @@ val sharedModule = module {
 
 
     // ViewModels
-    viewModel { CodesViewModel(get()) }
+    viewModel { CodesViewModel(get(), get()) }
     viewModel { PremiumCodesViewModel(get(), get(), get()) }
 //    viewModel { MatchesViewModel(get(), get()) }
     viewModel {

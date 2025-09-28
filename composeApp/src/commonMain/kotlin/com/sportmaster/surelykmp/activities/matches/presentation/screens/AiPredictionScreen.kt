@@ -542,15 +542,15 @@ fun AiPredictionsScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Debug info (remove in production)
-            if (match == null) {
-                Text(
-                    text = "DEBUG: Match not found. ID: $matchId, Matches loaded: ${matchesState is UiState.Success}",
-                    color = Color.Red,
-                    fontSize = 12.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+//            // Debug info (remove in production)
+//            if (match == null) {
+//                Text(
+//                    text = "DEBUG: Match not found. ID: $matchId, Matches loaded: ${matchesState is UiState.Success}",
+//                    color = Color.Red,
+//                    fontSize = 12.sp
+//                )
+//                Spacer(modifier = Modifier.height(8.dp))
+//            }
 
             // Match Info Card - Always try to show if match is found
             match?.let { foundMatch ->
@@ -732,7 +732,8 @@ private fun AdSubscriptionBanner(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2D4A87).copy(alpha = 0.9f)
+            containerColor = Color.Red.copy(alpha = 0.25f)
+//                (0xFF2D4A87)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -742,14 +743,14 @@ private fun AdSubscriptionBanner(
                 .padding(16.dp)
         ) {
             Text(
-                text = "AI SPORTS SAYS",
+                text = "Ai Punta",
                 color = Color.White,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Watch an ad for 20 minutes of free predictions or upgrade to Premium",
+                text = "Watch an ad for 20 minutes of free predictions",
                 color = Color.White,
                 fontSize = 14.sp
             )
@@ -764,9 +765,9 @@ private fun AdSubscriptionBanner(
                     onClick = onWatchAdClick,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
+                        containerColor = Color.White.copy(.18f)
                     ),
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(14.dp)
                 ) {
                     Icon(
                         Icons.Default.PlayArrow,
@@ -783,21 +784,21 @@ private fun AdSubscriptionBanner(
                     )
                 }
 
-                Button(
-                    onClick = onSubscribeClick,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1E88E5)
-                    ),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(
-                        text = "GET PREMIUM",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+//                Button(
+//                    onClick = onSubscribeClick,
+//                    modifier = Modifier.weight(1f),
+//                    colors = ButtonDefaults.buttonColors(
+//                        containerColor = Color(0xFF1E88E5)
+//                    ),
+//                    shape = RoundedCornerShape(20.dp)
+//                ) {
+//                    Text(
+//                        text = "GET PREMIUM",
+//                        color = Color.White,
+//                        fontSize = 12.sp,
+//                        fontWeight = FontWeight.Bold
+//                    )
+//                }
             }
         }
     }

@@ -93,4 +93,14 @@ actual class UnityAdsManager(private val context: Context) {
     actual fun isAdReady(placementId: String): Boolean {
         return adReadyMap[placementId] == true
     }
+
+    actual fun loadBannerAd(placementId: String) {
+        // Banner ads are loaded automatically by the BannerView
+        // This method can be used for manual loading if needed
+    }
+
+    actual fun isBannerReady(placementId: String): Boolean {
+        // Banner ads load automatically, so this can return true after initialization
+        return true
+    }
 }
