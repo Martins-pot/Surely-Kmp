@@ -261,7 +261,9 @@ fun CodesScreenPremium(
                     Box(
                         modifier = Modifier.fillMaxSize()
                         .then(
-                                if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive)
+                                if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive && !viewModel.isLoading
+                                    &&
+                                    viewModel.error == null && viewModel.codes.isNotEmpty())
                                     Modifier.blur(radius = 2.dp)
                                 else Modifier
                                 ),
@@ -286,7 +288,9 @@ fun CodesScreenPremium(
                         modifier = Modifier
                             .fillMaxSize()
                             .then(
-                                if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive)
+                                if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive && !viewModel.isLoading
+                                    &&
+                                    viewModel.error == null && viewModel.codes.isNotEmpty())
                                     Modifier.blur(radius = 5.dp)
                                 else Modifier
                             )
@@ -322,7 +326,8 @@ fun CodesScreenPremium(
             }
         }
 
-        if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive && !viewModel.isLoading) {
+        if (premiumState.isBlurActive && !premiumState.isSubscribed && !premiumState.isTimerActive && !viewModel.isLoading &&
+        viewModel.error == null && viewModel.codes.isNotEmpty()) {
             // Match the LazyColumn’s area: here we just overlay the whole Box but
             // we allow touches to “pass through” except on the card itself.
             Box(

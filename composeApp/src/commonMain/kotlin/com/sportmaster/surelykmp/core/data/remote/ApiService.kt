@@ -8,7 +8,7 @@ class CodesApiService(
     private val httpClient: HttpClient
 ) {
     companion object {
-        private const val BASE_URL = "https://telegram-bot-2h7q.onrender.com"
+        private const val BASE_URL = "https://srv442638.hstgr.cloud"
         private const val CODES_ENDPOINT = "$BASE_URL/codes/"
     }
 

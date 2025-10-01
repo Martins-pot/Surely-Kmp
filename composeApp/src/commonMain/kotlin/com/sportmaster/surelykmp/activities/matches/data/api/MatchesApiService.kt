@@ -14,7 +14,7 @@ import kotlinx.serialization.json.Json
 class MatchesApiService(private val httpClient: HttpClient) {
 
     companion object {
-        private const val BASE_URL = "https://telegram-bot-2h7q.onrender.com"
+        private const val BASE_URL = "https://srv442638.hstgr.cloud"
     }
 
     suspend fun getMatches(): List<MatchItem> {
