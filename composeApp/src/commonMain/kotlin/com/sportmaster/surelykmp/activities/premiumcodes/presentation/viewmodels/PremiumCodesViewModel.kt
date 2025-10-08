@@ -202,8 +202,8 @@ class PremiumCodesViewModel(
 
             when (val result = getCodesUseCase.execute(selectedSport)) {
                 is Result.Success -> {
-                    codes = result.data.filter { it.isExpensive  && it.odds  in 1.5 .. 2000.0
-                            && it.sport!!.equals(selectedSport.toString(), ignoreCase = true)
+                    codes = result.data.filter { it.isExpensive  && it.odds  in 1.2 .. 2000.0
+//                            && it.sport!!.equals(selectedSport.toString(), ignoreCase = true)
                     }
                         .sortedByDescending { code ->
                             try {

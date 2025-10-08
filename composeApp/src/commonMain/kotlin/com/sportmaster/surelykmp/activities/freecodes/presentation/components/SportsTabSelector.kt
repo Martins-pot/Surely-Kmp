@@ -124,7 +124,8 @@ fun SportTabSelector(
                         Text(
                             text = sport.displayName,
                             color = textColor,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 12.sp
                         )
                     }
                 }
