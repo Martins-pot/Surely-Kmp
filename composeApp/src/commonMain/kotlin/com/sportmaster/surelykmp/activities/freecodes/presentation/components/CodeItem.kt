@@ -311,13 +311,14 @@ private fun CodeTypeLayout(
             ) {
                 // Odds
                 Text(
-                    text = "${code.odds} odds",
+                    text = "${(round(code.odds * 10) / 10)} odds",
                     style = TextStyle(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )
                 )
+
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -471,7 +472,7 @@ private fun PredictionTypeLayout(
 
                 // Odds
                 Text(
-                    text = "${code.odds} odds",
+                    text =   "${(round(code.odds * 10) / 10)} odds",
                     style = TextStyle(
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,

@@ -14,6 +14,8 @@ import io.ktor.util.date.getTimeMillis
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toInstant
 
 
 // commonMain or shared module
@@ -200,7 +202,16 @@ class PremiumCodesViewModel(
 
             when (val result = getCodesUseCase.execute(selectedSport)) {
                 is Result.Success -> {
-                    codes = result.data.filter { it.isExpensive }
+                    codes = result.data.filter { it.isExpensive  && it.odds  in 1.5 .. 2000.0
+                            && it.sport!!.equals(selectedSport.toString(), ignoreCase = true)
+                    }
+                        .sortedByDescending { code ->
+                            try {
+                                code.createdAt?.toInstant() ?: Instant.DISTANT_PAST
+                            } catch (e: Exception) {
+                                Instant.DISTANT_PAST
+                            }
+                        }
                     error = null
                 }
                 is Result.Error -> {

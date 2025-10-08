@@ -2,6 +2,7 @@ package com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels
 
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.toLowerCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
@@ -11,6 +12,8 @@ import com.sportmaster.surelykmp.core.data.remote.DataError
 import com.sportmaster.surelykmp.core.data.remote.Result
 import com.sportmaster.surelykmp.utils.UnityAdsManager
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toInstant
 
 
 class CodesViewModel(
@@ -65,7 +68,18 @@ class CodesViewModel(
 
             when (val result = getCodesUseCase.execute(selectedSport)) {
                 is Result.Success -> {
-                    codes = result.data
+                    codes = result.data.filter { !it.isExpensive && it.odds  in 1.5 .. 2000.0 &&
+                                it.platform!!.toLowerCase() != "unknown"
+                                && it.country!!.toLowerCase() != "unknown"
+                                && it.sport!!.equals(selectedSport.toString(), ignoreCase = true)
+                    }
+                        .sortedByDescending { code ->
+                            try {
+                                code.createdAt?.toInstant() ?: Instant.DISTANT_PAST
+                            } catch (e: Exception) {
+                                Instant.DISTANT_PAST
+                            }
+                        }
                     error = null
                 }
                 is Result.Error -> {
