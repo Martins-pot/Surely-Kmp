@@ -19,7 +19,7 @@ actual class UnityAdsManager(private val context: Context) {
     private val adReadyMap = mutableMapOf<String, Boolean>()
 
     actual fun initializeAds(gameId: String) {
-        UnityAds.initialize(context, gameId, testMode = true,
+        UnityAds.initialize(context, gameId, testMode = false,
             object : IUnityAdsInitializationListener {
                 override fun onInitializationComplete() {
 

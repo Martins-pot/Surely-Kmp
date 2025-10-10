@@ -17,4 +17,33 @@ class CodesApiService(
             httpClient.get(CODES_ENDPOINT)
         }
     }
+//
+//    suspend fun loginUser(loginRequest: LoginRequest): TokenResponse {
+//        return client.post("$BASE_URL/auth/login") {
+//            setBody(loginRequest)
+//        }
+//    }
+//
+//    suspend fun registerUser(
+//        username: String,
+//        email: String,
+//        password: String,
+//        imageData: ByteArray
+//    ): HttpResponse {
+//        return client.post("$BASE_URL/auth/register") {
+//            // Multipart form data
+//        }
+//    }
+//
+//    suspend fun fetchUserDetails(): List<User> {
+//        return client.get("$BASE_URL/users")
+//    }
+//
+//    suspend fun verifyOtp(email: String, otp: String): HttpResponse {
+//        return client.post("$BASE_URL/auth/verify-otp") {
+//            parameter("email", email)
+//            parameter("otp", otp)
+//        }
+//    }
+
 }
