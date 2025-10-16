@@ -43,7 +43,6 @@ kotlin {
 //            added
             implementation(libs.ktor.client.android)
             implementation(libs.coil.kt.coil.compose)
-            implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0-alpha06")
             implementation(libs.androidx.activity.compose.v182)
 
             implementation(libs.androidx.security.crypto)
@@ -56,16 +55,14 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
 
-//            implementation(libs.filekit)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.jetbrains.compose.navigation)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.androidx.room.runtime)
             implementation(libs.sqlite.bundled)
+
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
             api(libs.koin.core)
@@ -77,10 +74,14 @@ kotlin {
             implementation(libs.material.icons.extended)
             implementation("media.kamel:kamel-image:0.9.5")
 
-            // DateTime
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+// DateTime
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
+// File handling
+            implementation("io.github.xxfast:kstore:0.6.0")
+
+            implementation("com.russhwolf:multiplatform-settings:1.1.1")
 
         }
         nativeMain.dependencies {

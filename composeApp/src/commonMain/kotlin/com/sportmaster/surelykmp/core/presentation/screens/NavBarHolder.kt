@@ -43,15 +43,19 @@ import com.sportmaster.surelykmp.activities.matches.presentation.screens.AiPredi
 import com.sportmaster.surelykmp.activities.matches.presentation.screens.MatchesScreen
 import com.sportmaster.surelykmp.activities.matches.presentation.viewmodel.MatchesViewModel
 import com.sportmaster.surelykmp.activities.premiumcodes.presentation.screens.CodesScreenPremium
+import com.sportmaster.surelykmp.activities.register.presentation.screens.RegisterScreen
+import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.RegisterViewModel
 //import com.sportmaster.surelykmp.di.AppModule
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import surelykmp.composeapp.generated.resources.Res
 import surelykmp.composeapp.generated.resources.background_texture
+import surelykmp.composeapp.generated.resources.selected_account
 import surelykmp.composeapp.generated.resources.selected_free_codes
 import surelykmp.composeapp.generated.resources.selected_matches
 import surelykmp.composeapp.generated.resources.selected_premium_codes
 import surelykmp.composeapp.generated.resources.selected_profile
+import surelykmp.composeapp.generated.resources.unselected_account
 import surelykmp.composeapp.generated.resources.unselected_free_codes
 import surelykmp.composeapp.generated.resources.unselected_matches
 import surelykmp.composeapp.generated.resources.unselected_premium_codes
@@ -69,7 +73,7 @@ fun NavController.navigateToAiPredictions(matchId: String) {
 }
 
 @Composable
-fun MainScreen(startDestination: String = Screen.FreeCodes.route){
+fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
     val navController = rememberNavController()
     val items = listOf(
         BottomNavigationItem(
@@ -89,16 +93,22 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
             selectedIcon = painterResource(Res.drawable.selected_matches),
             unselectedIcon = painterResource(Res.drawable.unselected_matches),
             hasNews = false,
+        ),
+        BottomNavigationItem(
+            title = "account",
+            selectedIcon = painterResource(Res.drawable.selected_account),
+            unselectedIcon = painterResource(Res.drawable.unselected_account),
+            hasNews = false,
         )
     )
     var selectedItemIndex by rememberSaveable {
         mutableStateOf(0)
     }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        //  Background image
-
+        // Background
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -107,9 +117,7 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
         Image(
             painter = painterResource(Res.drawable.background_texture),
             contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-            ,
+            modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
         Image(
@@ -118,16 +126,10 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-//        Image(
-//            painter = painterResource(Res.drawable.background_texture),
-//            contentDescription = null,
-//            modifier = Modifier.fillMaxSize(),
-//            contentScale = ContentScale.Crop
-//        )
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent, //  Let image show through
+            containerColor = Color.Transparent,
             contentColor = Color.White,
             bottomBar = {
                 Box(
@@ -143,14 +145,12 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    //  Navigation Bar inside bottomBar
                     NavigationBar(
                         containerColor = Color.Transparent,
                         tonalElevation = 0.dp,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(70.dp)
-//                            .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
                     ) {
                         items.forEachIndexed { index, item ->
                             val isSelected =
@@ -199,7 +199,6 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
                 }
             }
         ) { paddingValues ->
-            //  Screen content above bottom bar
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
@@ -208,10 +207,8 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
                 composable(Screen.FreeCodes.route) { FreeCodes() }
                 composable(Screen.Matches.route) { Matches(navController) }
                 composable(Screen.PremiumCodes.route) { PremiumCodes() }
+                composable(Screen.Account.route) { AccountScreen(navController) }
 
-                composable(Screen.Matches.route) {
-                    Matches(navController = navController)
-                }
                 composable(
                     route = "${Screen.AiPredictions.route}/{matchId}",
                     arguments = listOf(navArgument("matchId") { type = NavType.StringType })
@@ -222,8 +219,16 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route){
             }
         }
     }
+}
 
-
+@Composable
+fun AccountScreen(navController: NavController) {
+    val viewModel: RegisterViewModel = koinInject()
+    RegisterScreen(
+        viewModel = viewModel,
+        onNavigateBack = { navController.popBackStack() },
+        onLoginSuccess = { navController.popBackStack() }
+    )
 }
 
 

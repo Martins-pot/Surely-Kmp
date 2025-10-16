@@ -3,6 +3,7 @@ package com.sportmaster.surelykmp.di
 
 
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.PreferencesManager
+import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.ImageRepository
 import com.sportmaster.surelykmp.utils.AppVersionProvider
 import com.sportmaster.surelykmp.utils.UnityAdsManager
 import io.ktor.client.engine.*
@@ -15,4 +16,5 @@ actual val platformModule: Module = module {
     single { PreferencesManager() }
     single { UnityAdsManager() }
     single { AppVersionProvider() }
+    single<ImageRepository> { ImageRepositoryImpl() }
 }

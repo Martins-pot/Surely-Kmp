@@ -8,44 +8,53 @@ import kotlinx.serialization.Serializable
 data class RegisterRequest(
     val username: String,
     val email: String,
-    val password: String
-)
-
-@Serializable
-data class LoginRequest(
-    val username: String = "",
-    val email: String = "",
     val password: String,
     @SerialName("device_token") val deviceToken: String = ""
 )
 
 @Serializable
-data class VerifyOtpRequest(
+data class LoginRequest(
+    val username: String,
+    val email: String,
+    val password: String,
+    @SerialName("device_token") val deviceToken: String
+)
+
+@Serializable
+data class OtpVerificationRequest(
     val email: String,
     val otp: String
 )
 
 @Serializable
-data class UpdatePasswordRequest(
-    val password: String
+data class OtpSendRequest(
+    val email: String,
+    val username: String,
+    val subject: String,
+    val template_name: String,
+    val tag: String
 )
 
 @Serializable
-data class SubscriptionInfo(
-    @SerialName("subscription_start_time") val startTime: String?,
-    @SerialName("subscription_end_time") val endTime: String?,
-    @SerialName("subscription_status") val status: String?,
-    @SerialName("subscription_product_id") val productId: String?,
-    @SerialName("subscription_token") val token: String?
+data class AuthResponse(
+    @SerialName("access_token") val accessToken: String,
+    @SerialName("refresh_token") val refreshToken: String,
+    val avatar: String? = null
 )
 
-// Local storage models
-data class UserSession(
-    val username: String,
-    val email: String,
-    val avatar: String,
-    val userId: String,
-    val accessToken: String,
-    val refreshToken: String,
-    val isRemembered: Boolean = false
+@Serializable
+data class UserResponse(
+    @SerialName("username") val userName: String?,
+    @SerialName("_id") val userId: String?,
+    val email: String?,
+    val avatar: String?,
+    @SerialName("subscription_status") val subscriptionStatus: String?
 )
+
+sealed class AuthState {
+    object Idle : AuthState()
+    object Loading : AuthState()
+    data class Success(val message: String) : AuthState()
+    data class Error(val message: String) : AuthState()
+    object OtpSent : AuthState()
+}

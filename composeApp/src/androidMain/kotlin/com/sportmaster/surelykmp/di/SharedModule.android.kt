@@ -1,6 +1,9 @@
 package com.sportmaster.surelykmp.di
 
+import android.content.Context
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.PreferencesManager
+import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.ImageRepository
+import com.sportmaster.surelykmp.repository.ImageRepositoryImpl
 import com.sportmaster.surelykmp.utils.AppVersionProvider
 import com.sportmaster.surelykmp.utils.UnityAdsManager
 import io.ktor.client.engine.*
@@ -16,4 +19,5 @@ actual val platformModule: Module = module {
     single { PreferencesManager(androidApplication()) }
     single { UnityAdsManager(androidApplication()) }
     single { AppVersionProvider(androidContext()) }
+    single<ImageRepository> { ImageRepositoryImpl(get<Context>()) }
 }
