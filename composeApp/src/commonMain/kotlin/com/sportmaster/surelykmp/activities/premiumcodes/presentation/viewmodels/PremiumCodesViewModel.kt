@@ -252,8 +252,7 @@ class PremiumCodesViewModel(
     }
 }
 
-// 2. Create the PreferencesManager interface and implementations
-// commonMain
+
 expect class PreferencesManager {
     fun putLong(key: String, value: Long)
     fun getLong(key: String, defaultValue: Long): Long

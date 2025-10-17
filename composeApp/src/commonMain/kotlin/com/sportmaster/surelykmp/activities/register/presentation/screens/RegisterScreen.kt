@@ -30,11 +30,15 @@ import com.mertswork.footyreserve.ui.theme.Dimens
 import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.RegisterViewModel
 
 
+
+
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
     onNavigateBack: () -> Unit,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateToLogin: (() -> Unit)? = null,
+    onNavigateToRegister: (() -> Unit)? = null
 ) {
     var showOtpScreen by remember { mutableStateOf(false) }
     var registeredEmail by remember { mutableStateOf("") }
@@ -51,6 +55,7 @@ fun RegisterScreen(
             is AuthState.Success -> {
                 if (!showOtpScreen) {
                     onLoginSuccess()
+                    viewModel.resetState()
                 }
             }
             else -> {}
@@ -75,17 +80,31 @@ fun RegisterScreen(
                     showOtpScreen = false
                     viewModel.resetState()
                 },
-                onVerified = onLoginSuccess
+                onVerified = {
+                    showOtpScreen = false
+                }
             )
             isLoginMode -> LoginForm(
                 viewModel = viewModel,
                 onNavigateBack = onNavigateBack,
-                onToggleMode = { viewModel.toggleMode() }
+                onToggleMode = {
+                    if (onNavigateToRegister != null) {
+                        onNavigateToRegister()
+                    } else {
+                        viewModel.toggleMode()
+                    }
+                }
             )
             else -> RegisterForm(
                 viewModel = viewModel,
                 onNavigateBack = onNavigateBack,
-                onToggleMode = { viewModel.toggleMode() },
+                onToggleMode = {
+                    if (onNavigateToLogin != null) {
+                        onNavigateToLogin()
+                    } else {
+                        viewModel.toggleMode()
+                    }
+                },
                 onOtpSent = { email, username ->
                     registeredEmail = email
                     registeredUsername = username
@@ -326,7 +345,6 @@ fun RegisterForm(
     }
 }
 
-
 @Composable
 fun LoginForm(
     viewModel: RegisterViewModel,
@@ -506,7 +524,7 @@ fun LoginForm(
 
         // Guest Button
         OutlinedButton(
-            onClick = { /* Handle guest login */ },
+            onClick = onNavigateBack,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(55.dp),
@@ -764,7 +782,6 @@ fun CustomTextField(
                     }
                 )
 
-
                 if (isPassword) {
                     IconButton(
                         onClick = onPasswordVisibilityToggle,
@@ -789,127 +806,6 @@ fun CustomTextField(
             )
         }
     }
-
-    @Composable
-    fun OtpTextField(
-        value: String,
-        onValueChange: (String) -> Unit,
-        modifier: Modifier = Modifier
-    ) {
-        Box(
-            modifier = modifier
-                .height(60.dp)
-                .background(
-                    color = Color.White.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(10.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(10.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            BasicTextField(
-                value = value,
-                onValueChange = { if (it.length <= 1 && it.all { char -> char.isDigit() }) onValueChange(it) },
-                textStyle = LocalTextStyle.current.copy(
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Center
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-
-    @Composable
-    fun LoginToggleButton(
-        text: String,
-        isSelected: Boolean,
-        onClick: () -> Unit,
-        modifier: Modifier = Modifier
-    ) {
-        Box(
-            modifier = modifier
-                .height(45.dp)
-                .background(
-                    color = if (isSelected) Color.White.copy(alpha = 0.2f) else Color.Transparent,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .clickable { onClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                fontSize = 14.sp,
-                color = Color.White,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-            )
-        }
-    }
-//
-//    @Composable
-//    fun ProfileImagePicker(
-//        selectedImageBytes: ByteArray?,
-//        onImageSelected: (ByteArray) -> Unit
-//    ) {
-//        // This is a placeholder - you'll need to implement actual image picking logic
-//        // using your platform-specific image picker
-//        Box(
-//            modifier = Modifier
-//                .size(80.dp)
-//                .clip(CircleShape)
-//                .background(Color.White.copy(alpha = 0.1f))
-//                .clickable {
-//                    // Trigger image picker here
-//                    // For now, this is just a placeholder
-//                },
-//            contentAlignment = Alignment.Center
-//        ) {
-//            if (selectedImageBytes != null) {
-//                // Display selected image
-//                // You'll need to convert ByteArray to ImageBitmap
-//                Icon(
-//                    painter = painterResource(Res.drawable.register_white_placeholder),
-//                    contentDescription = "Profile picture",
-//                    tint = Color.White,
-//                    modifier = Modifier.size(40.dp)
-//                )
-//            } else {
-//                Icon(
-//                    painter = painterResource(Res.drawable.register_white_placeholder),
-//                    contentDescription = "Select profile picture",
-//                    tint = Color.White,
-//                    modifier = Modifier.size(40.dp)
-//                )
-//            }
-//        }
-//    }
-
-    if (isPassword) {
-    IconButton(
-        onClick = onPasswordVisibilityToggle,
-        modifier = Modifier.padding(end = 10.dp)
-    ) {
-        Icon(
-            painter = painterResource(if (passwordVisible) Res.drawable.eye_open else Res.drawable.eye_closed),
-            contentDescription = if (passwordVisible) "Hide password" else "Show password",
-            tint = Color.White
-        )
-    }
-}
-
-
-if (errorMessage != null) {
-    Spacer(modifier = Modifier.height(5.dp))
-    Text(
-        text = errorMessage,
-        color = Color(0xFFE53935),
-        fontSize = 10.sp
-    )
-}
 }
 
 @Composable
@@ -971,13 +867,6 @@ fun LoginToggleButton(
         )
     }
 }
-
-
-//@Composable
-//expect fun ProfileImagePicker(
-//    imageUri: String?,
-//    onImageSelected: (String?) -> Unit
-//)
 
 @Composable
 expect fun ProfileImagePicker(

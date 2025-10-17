@@ -10,6 +10,10 @@ import com.sportmaster.surelykmp.activities.matches.data.repository.MatchesRepos
 import com.sportmaster.surelykmp.activities.matches.domain.GetMatchesUseCase
 import com.sportmaster.surelykmp.activities.matches.domain.GetPredictionUseCase
 import com.sportmaster.surelykmp.activities.matches.presentation.viewmodel.MatchesViewModel
+import com.sportmaster.surelykmp.activities.profile.data.ProfileRepositoryImpl
+import com.sportmaster.surelykmp.activities.profile.data.preferences.UserPreferences
+import com.sportmaster.surelykmp.activities.profile.domain.repository.ProfileRepository
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileViewModel
 import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.RegisterViewModel
 import com.sportmaster.surelykmp.core.data.HttpClientFactory
 import com.sportmaster.surelykmp.core.data.remote.CodesApiService
@@ -24,6 +28,8 @@ import com.sportmaster.surelykmp.core.domain.usecase.CheckEmailAvailabilityUseCa
 import com.sportmaster.surelykmp.core.domain.usecase.CheckUsernameAvailabilityUseCase
 import com.sportmaster.surelykmp.core.presentation.viewmodel.VersionCheckViewModel
 import com.sportmaster.surelykmp.utils.AppVersionProvider
+import com.sportmaster.surelykmp.utils.PlatformUtils
+import com.sportmaster.surelykmp.utils.getPlatformUtils
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -31,6 +37,14 @@ import org.koin.dsl.module
 expect val platformModule: Module
 
 val sharedModule = module {
+    // ==================== Network ====================
+    // ==================== Platform ====================
+    single<PlatformUtils> { getPlatformUtils() }
+
+    // ==================== Settings ====================
+    // Platform-specific Settings instance (expect from platformModule)
+    single { UserPreferences(get()) }
+
     // ==================== Network ====================
     single { HttpClientFactory.create(get()) }
     single { CodesApiService(get()) }
@@ -41,6 +55,7 @@ val sharedModule = module {
     single { MatchesRepository(get()) }
     single { VersionCheckRepository(get()) }
     single { AuthRepositoryImpl(get()) }
+    single<ProfileRepository> { ProfileRepositoryImpl(get(), get()) }
 
     // ==================== Use Cases ====================
     // Codes Use Cases
@@ -51,7 +66,7 @@ val sharedModule = module {
 
     // Auth Use Cases
     single { RegisterUserUseCase(get()) }
-    single { LoginUserUseCase(get()) }
+    single { LoginUserUseCase(get() ,get()) }
     single { VerifyOtpUseCase(get()) }
     single { SendOtpUseCase(get()) }
     single { CheckEmailAvailabilityUseCase(get()) }
@@ -77,7 +92,8 @@ val sharedModule = module {
             sendOtpUseCase = get(),
             checkEmailAvailabilityUseCase = get(),
             checkUsernameAvailabilityUseCase = get(),
-            imageRepository = get()
+            imageRepository = get(),
+            userPreferences = get()
         )
     }
 
@@ -89,4 +105,6 @@ val sharedModule = module {
             platform = versionProvider.getPlatform()
         )
     }
+
+    viewModel { ProfileViewModel(get()) }
 }

@@ -1,261 +1,218 @@
 package com.sportmaster.surelykmp.activities.profile.presentation.viewmodels
 
-
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sportmaster.surelykmp.activities.profile.data.User
+import com.sportmaster.surelykmp.activities.profile.domain.repository.ProfileRepository
+import com.sportmaster.surelykmp.core.data.remote.Result // Add this import
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-data class ProfileUiState(
+data class ProfileState(
     val isLoggedIn: Boolean = false,
-    val isLoadingUser: Boolean = false,
+    val isLoading: Boolean = false,
     val username: String? = null,
-    val userAvatar: String? = null,
+    val email: String? = null,
     val userId: String? = null,
+    val avatarUrl: String? = null,
     val isSubscribed: Boolean = false,
-    val versionText: String = "",
-    val showTermsSheet: Boolean = false,
-    val termsContent: String = "",
-    val snackbarMessage: String? = null
+    val subscriptionStartTime: String? = null,
+    val subscriptionEndTime: String? = null,
+    val subscriptionStatus: String? = null,
+    val versionName: String = "1.0.0",
+    val errorMessage: String? = null
 )
 
+sealed interface ProfileAction {
+    object OnLoginClick : ProfileAction
+    object OnRegisterClick : ProfileAction
+    object OnGetProClick : ProfileAction
+    object OnAccountDetailsClick : ProfileAction
+    object OnContactUsClick : ProfileAction
+    object OnShareAppClick : ProfileAction
+    object OnRateAppClick : ProfileAction
+    object OnLogoutClick : ProfileAction
+    object OnLoadUserProfile : ProfileAction
+    data class OnShowTerms(val title: String, val content: String) : ProfileAction
+}
+
+sealed interface ProfileEvent {
+    object NavigateToLogin : ProfileEvent
+    object NavigateToRegister : ProfileEvent
+    object NavigateToSubscription : ProfileEvent
+    object NavigateToAccountDetails : ProfileEvent
+    data class OpenEmail(val email: String) : ProfileEvent
+    data class ShareApp(val appLink: String) : ProfileEvent
+    object OpenRateApp : ProfileEvent
+    data class ShowError(val message: String) : ProfileEvent
+    data class ShowSuccess(val message: String) : ProfileEvent
+}
+
 class ProfileViewModel(
-    private val userManager: UserManager,
-    private val tokenManager: TokenManager,
-    private val profileRepository: ProfileRepository,
-    private val platformActions: PlatformActions
+    private val repository: ProfileRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProfileUiState())
-    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(ProfileState())
+    val state = _state.asStateFlow()
+
+    private val eventChannel = Channel<ProfileEvent>()
+    val events = eventChannel.receiveAsFlow()
 
     init {
-        observeUserState()
-        loadVersionInfo()
+        loadUserProfile()
     }
 
-    private fun observeUserState() {
-        viewModelScope.launch {
-            combine(
-                userManager.isLoggedIn,
-                userManager.currentUser
-            ) { isLoggedIn, user ->
-                _uiState.update { it.copy(
-                    isLoggedIn = isLoggedIn,
-                    username = user?.userName,
-                    userAvatar = user?.avatar,
-                    userId = user?.userId
-                )}
-
-                if (isLoggedIn) {
-                    checkSubscriptionStatus()
-                    fetchUserDetails()
+    fun onAction(action: ProfileAction) {
+        when (action) {
+            ProfileAction.OnLoginClick -> {
+                viewModelScope.launch {
+                    eventChannel.send(ProfileEvent.NavigateToLogin)
                 }
-            }.collect()
+            }
+            ProfileAction.OnRegisterClick -> {
+                viewModelScope.launch {
+                    eventChannel.send(ProfileEvent.NavigateToRegister)
+                }
+            }
+            ProfileAction.OnGetProClick -> {
+                viewModelScope.launch {
+                    if (_state.value.isLoggedIn) {
+                        eventChannel.send(ProfileEvent.NavigateToSubscription)
+                    } else {
+                        eventChannel.send(ProfileEvent.ShowError("Log in to subscribe"))
+                    }
+                }
+            }
+            ProfileAction.OnAccountDetailsClick -> {
+                viewModelScope.launch {
+                    eventChannel.send(ProfileEvent.NavigateToAccountDetails)
+                }
+            }
+            ProfileAction.OnContactUsClick -> {
+                viewModelScope.launch {
+                    eventChannel.send(ProfileEvent.OpenEmail("help@mertscript.com"))
+                }
+            }
+            ProfileAction.OnShareAppClick -> {
+                viewModelScope.launch {
+                    val appLink = "https://play.google.com/store/apps/details?id=com.sportmaster.surelykmp"
+                    eventChannel.send(ProfileEvent.ShareApp(appLink))
+                }
+            }
+            ProfileAction.OnRateAppClick -> {
+                viewModelScope.launch {
+                    eventChannel.send(ProfileEvent.OpenRateApp)
+                }
+            }
+            ProfileAction.OnLogoutClick -> {
+                logout()
+            }
+            ProfileAction.OnLoadUserProfile -> {
+                loadUserProfile()
+            }
+            is ProfileAction.OnShowTerms -> {
+                // Handle showing terms - could send event if needed
+            }
         }
     }
 
-    private fun loadVersionInfo() {
-        val version = platformActions.getAppVersion()
-        _uiState.update { it.copy(versionText = "V.$version") }
-    }
+    private fun loadUserProfile() {
+        viewModelScope.launch {
+            val isLoggedIn = repository.isUserLoggedIn()
 
-    private suspend fun fetchUserDetails() {
-        _uiState.update { it.copy(isLoadingUser = true) }
+            if (isLoggedIn) {
+                _state.update { it.copy(isLoading = true, isLoggedIn = true) }
 
-        profileRepository.fetchUserDetails()
-            .onSuccess { user ->
-                userManager.updateUserInfo(user)
-                _uiState.update {
+                val username = repository.getUsername()
+                val avatar = repository.getAvatar()
+                val userId = repository.getUserId()
+
+                _state.update {
                     it.copy(
-                        isLoadingUser = false,
-                        username = user.userName,
-                        userAvatar = user.avatar,
-                        userId = user.userId
+                        username = username,
+                        avatarUrl = avatar,
+                        userId = userId,
+                        isLoading = false
+                    )
+                }
+
+                // Use a more type-safe approach
+                val result = repository.fetchUserDetails(username ?: "")
+                if (result is Result.Success<*> && result.data is User) {
+                    val userData = result.data
+                    _state.update {
+                        it.copy(
+                            username = userData.userName,
+                            email = userData.email,
+                            avatarUrl = userData.avatar,
+                            userId = userData.userId,
+                            subscriptionStatus = userData.subscriptionStatus,
+                            subscriptionStartTime = userData.subscriptionStartTime,
+                            subscriptionEndTime = userData.subscriptionEndTime,
+                            isSubscribed = checkSubscriptionStatus(
+                                userData.subscriptionStatus,
+                                userData.subscriptionEndTime
+                            ),
+                            isLoading = false
+                        )
+                    }
+                    repository.saveUserData(userData)
+                } else if (result is Result.Error<*>) {
+                    _state.update { it.copy(isLoading = false) }
+                }
+
+                checkSubscription()
+            } else {
+                _state.update {
+                    it.copy(
+                        isLoggedIn = false,
+                        isLoading = false
                     )
                 }
             }
-            .onFailure { error ->
-                _uiState.update { it.copy(isLoadingUser = false) }
-
-                // Check if token expired and retry
-                if (tokenManager.isTokenExpiredException(error)) {
-                    handleTokenExpiration()
-                }
-            }
+        }
     }
 
-    private suspend fun handleTokenExpiration() {
-        tokenManager.refreshAccessToken()
-            .onSuccess {
-                // Retry fetching user details
-                fetchUserDetails()
-            }
-            .onFailure {
-                showSnackbar("Session expired. Please login again.")
-                logout()
-            }
-    }
-
-    private suspend fun checkSubscriptionStatus() {
-        profileRepository.getSubscriptionStatus()
-            .onSuccess { isSubscribed ->
-                _uiState.update { it.copy(isSubscribed = isSubscribed) }
-            }
-            .onFailure {
-                _uiState.update { it.copy(isSubscribed = false) }
-            }
-    }
-
-    fun logout() {
+    private fun checkSubscription() {
         viewModelScope.launch {
-            userManager.logout()
-            _uiState.update {
-                ProfileUiState(
-                    versionText = _uiState.value.versionText
-                )
-            }
-            showSnackbar("Logged out successfully")
+            val status = repository.getSubscriptionStatus()
+            val endTime = repository.getSubscriptionEndTime()
+            val isSubscribed = checkSubscriptionStatus(status, endTime)
+            _state.update { it.copy(isSubscribed = isSubscribed) }
         }
     }
 
-    fun toggleTermsView(show: Boolean) {
-        if (show) {
-            _uiState.update {
-                it.copy(
-                    showTermsSheet = true,
-                    termsContent = getTermsOfService()
-                )
-            }
-        } else {
-            _uiState.update { it.copy(showTermsSheet = false) }
+    private fun checkSubscriptionStatus(status: String?, endTimeStr: String?): Boolean {
+        if (status != "valid") return false
+
+        return try {
+            val endTime = endTimeStr?.toLongOrNull() ?: return false
+            val currentTime = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            endTime > currentTime
+        } catch (e: Exception) {
+            false
         }
     }
 
-    fun togglePrivacyView(show: Boolean) {
-        if (show) {
-            _uiState.update {
-                it.copy(
-                    showTermsSheet = true,
-                    termsContent = getPrivacyPolicy()
-                )
-            }
-        } else {
-            _uiState.update { it.copy(showTermsSheet = false) }
-        }
-    }
-
-    fun onContactUsClick() {
-        val success = platformActions.sendEmail(
-            email = "help@mertscript.com",
-            subject = "",
-            message = ""
-        )
-
-        if (!success) {
-            showSnackbar("Email client not found. Contact: help@mertscript.com")
-            platformActions.copyToClipboard("help@mertscript.com")
-        }
-    }
-
-    fun onShareAppClick() {
-        platformActions.shareApp()
-    }
-
-    fun onRateAppClick() {
-        platformActions.rateApp()
-    }
-
-    fun showSnackbar(message: String) {
+    private fun logout() {
         viewModelScope.launch {
-            _uiState.update { it.copy(snackbarMessage = message) }
-            kotlinx.coroutines.delay(3000)
-            _uiState.update { it.copy(snackbarMessage = null) }
+            val rememberMe = repository.getRememberMe()
+
+            if (!rememberMe) {
+                repository.clearUserData()
+                repository.clearTokens()
+                repository.clearSubscriptionData()
+            }
+
+            _state.update {
+                ProfileState(
+                    isLoggedIn = false,
+                    versionName = it.versionName
+                )
+            }
+
+            eventChannel.send(ProfileEvent.ShowSuccess("Logged out successfully"))
         }
     }
-
-    private fun getTermsOfService(): String {
-        return """
-            Terms of Service
-            
-            1. Introduction
-            Welcome to ForeSport. By using our app, you agree to these Terms of Service.
-            
-            2. User Information
-            We collect and store user information, including names, emails, and passwords. By using our app, you consent to this data collection.
-            
-            3. Predictions Disclaimer
-            We provide predictions for SportyBet, 1xBet, Bet9ja, and BetKing. However, we are not responsible for any bets you place outside our app using these predictions.
-            
-            4. Subscriptions & Ads
-            Our app includes subscriptions and advertisements to support our services.
-            
-            5. No Refunds
-            All purchases and subscriptions are non-refundable. Please review your choices before making a payment.
-            
-            6. Non-Transferable Subscriptions
-            Subscriptions are device-specific and cannot be transferred to another device. Even if an account is premium, it will only remain premium on the original device where the subscription was made.
-            
-            7. Notifications
-            We may send notifications related to your account, updates, and promotions.
-            
-            8. Data Storage
-            Your information is securely stored in our database.
-            
-            9. Changes to Terms
-            We reserve the right to update these Terms at any time. Continued use of our app constitutes acceptance of the updated Terms.
-            
-            10. Contact Us
-            If you have any questions about these Terms, please contact us.
-        """.trimIndent()
-    }
-
-    private fun getPrivacyPolicy(): String {
-        return """
-            Privacy Policy
-            
-            1. Introduction
-            Welcome to ForeSport. This Privacy Policy explains how we collect, use, and protect your personal information.
-            
-            2. Information We Collect
-            We collect and store the following user data: names, emails, and passwords. By using our app, you consent to this data collection.
-            
-            3. Use of Information
-            Your information is used for account management, security, and personalized experiences within the app.
-            
-            4. Predictions Disclaimer
-            We provide predictions for SportyBet, 1xBet, Bet9ja, and BetKing. However, we are not responsible for any bets you place outside our app using these predictions.
-            
-            5. Subscriptions & Ads
-            Our app includes subscriptions and advertisements to support our services.
-            
-            6. No Refunds
-            All purchases and subscriptions are non-refundable. Please review your choices before making a payment.
-            
-            7. Non-Transferable Subscriptions
-            Subscriptions are device-specific and cannot be transferred to another device.
-            
-            8. Notifications
-            We may send notifications related to your account, updates, and promotions.
-            
-            9. Data Storage
-            Your personal information is securely stored in our database and protected from unauthorized access.
-            
-            10. Changes to This Policy
-            We reserve the right to update this Privacy Policy at any time. Continued use of our app constitutes acceptance of the updated policy.
-            
-            11. Contact Us
-            If you have any questions regarding this Privacy Policy, please contact us.
-        """.trimIndent()
-    }
-}
-
-// Platform-specific actions interface
-interface PlatformActions {
-    fun getAppVersion(): String
-    fun sendEmail(email: String, subject: String, message: String): Boolean
-    fun shareApp()
-    fun rateApp()
-    fun copyToClipboard(text: String)
 }

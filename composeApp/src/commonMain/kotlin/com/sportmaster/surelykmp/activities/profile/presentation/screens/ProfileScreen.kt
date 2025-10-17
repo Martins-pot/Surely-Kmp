@@ -1,10 +1,8 @@
 package com.sportmaster.surelykmp.activities.profile.presentation.screens
 
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,39 +16,104 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.*
+import com.sportmaster.surelykmp.core.presentation.screens.Screen
+import com.sportmaster.surelykmp.ui.theme.NunitoBlackFamily
+import com.sportmaster.surelykmp.ui.theme.NunitoBoldFamily
+import com.sportmaster.surelykmp.ui.theme.NunitoMediumFamily
+import com.sportmaster.surelykmp.ui.theme.NunitoSemiBoldFamily
+import com.sportmaster.surelykmp.ui.theme.RushonGroundFamily
+import com.sportmaster.surelykmp.utils.getPlatformUtils
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import surelykmp.composeapp.generated.resources.*
 
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel,
-    onNavigateToAccountDetails: () -> Unit,
-    onNavigateToSubscription: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    navController: NavController,
+    viewModel: ProfileViewModel = koinInject()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.state.collectAsState()
     val scrollState = rememberScrollState()
+    var showTermsSheet by remember { mutableStateOf(false) }
+    var termsContent by remember { mutableStateOf("") }
+    var termsTitle by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val platformUtils = remember { getPlatformUtils() }
+
+    // Handle events
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                ProfileEvent.NavigateToLogin -> {
+                    println("ProfileScreen - Navigating to Login")
+                    navController.navigate(Screen.Login.route)
+                }
+                ProfileEvent.NavigateToRegister -> {
+                    println("ProfileScreen - Navigating to Register")
+                    navController.navigate(Screen.Register.route)
+                }
+                ProfileEvent.NavigateToSubscription -> navController.navigate(Screen.Subscription.route)
+                ProfileEvent.NavigateToAccountDetails -> navController.navigate(Screen.AccountDetails.route)
+                is ProfileEvent.OpenEmail -> {
+                    platformUtils.openEmail(
+                        email = event.email,
+                        subject = "ForeSport Support",
+                        body = ""
+                    )
+                }
+                is ProfileEvent.ShareApp -> {
+                    platformUtils.shareText(
+                        text = event.appLink,
+                        title = "Check out ForeSport!"
+                    )
+                }
+                ProfileEvent.OpenRateApp -> {
+                    platformUtils.openAppInStore("com.sportmaster.surelykmp")
+                }
+                is ProfileEvent.ShowError -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+                is ProfileEvent.ShowSuccess -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        }
+    }
+
+    // Debug log for state changes
+    LaunchedEffect(state.isLoggedIn, state.username) {
+        println("ProfileScreen - State updated: isLoggedIn=${state.isLoggedIn}, username=${state.username}")
+    }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF1A1A2E))
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Background texture
+        // Background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkGrayBackground)
+        )
         Image(
-            painter = painterResource("drawable/maintexture.png"),
+            painter = painterResource(Res.drawable.background_texture),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-            alpha = 0.3f
+            contentScale = ContentScale.Crop
         )
 
         Column(
@@ -60,77 +123,79 @@ fun ProfileScreen(
         ) {
             // Header
             ProfileHeader(
-                onGetProClick = {
-                    if (uiState.isLoggedIn) {
-                        onNavigateToSubscription()
-                    } else {
-                        viewModel.showSnackbar("Log in to subscribe")
-                    }
-                },
-                showProButton = !uiState.isSubscribed
+                isSubscribed = state.isSubscribed,
+                onGetProClick = { viewModel.onAction(ProfileAction.OnGetProClick) }
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
             // Content based on login state
-            if (uiState.isLoggedIn) {
+            if (state.isLoggedIn) {
+                println("ProfileScreen - Showing LoggedInContent")
                 LoggedInContent(
-                    uiState = uiState,
-                    onAccountDetailsClick = onNavigateToAccountDetails,
-                    onContactClick = { viewModel.onContactUsClick() },
-                    onTermsClick = { viewModel.toggleTermsView(true) },
-                    onPrivacyClick = { viewModel.togglePrivacyView(true) },
-                    onShareClick = { viewModel.onShareAppClick() },
-                    onRateClick = { viewModel.onRateAppClick() },
-                    onLogoutClick = { viewModel.logout() }
+                    state = state,
+                    onAccountDetailsClick = { viewModel.onAction(ProfileAction.OnAccountDetailsClick) },
+                    onContactUsClick = { viewModel.onAction(ProfileAction.OnContactUsClick) },
+                    onShareAppClick = { viewModel.onAction(ProfileAction.OnShareAppClick) },
+                    onRateAppClick = { viewModel.onAction(ProfileAction.OnRateAppClick) },
+                    onLogoutClick = { viewModel.onAction(ProfileAction.OnLogoutClick) },
+                    onShowTerms = { title, content ->
+                        termsTitle = title
+                        termsContent = content
+                        showTermsSheet = true
+                    }
                 )
             } else {
+                println("ProfileScreen - Showing GuestContent")
                 GuestContent(
-                    onLoginClick = onNavigateToLogin,
-                    onRegisterClick = onNavigateToRegister
+                    onLoginClick = { viewModel.onAction(ProfileAction.OnLoginClick) },
+                    onRegisterClick = { viewModel.onAction(ProfileAction.OnRegisterClick) }
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Version text
             Text(
-                text = uiState.versionText,
+                text = "V.${state.versionName}",
+                fontSize = 12.sp,
+                color = Color.Gray,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
-                textAlign = TextAlign.Center,
-                color = Color.Gray,
-                fontSize = 12.sp
+                textAlign = TextAlign.Center
             )
         }
 
-        // Terms/Privacy bottom sheet
-        BottomSheet(
-            isVisible = uiState.showTermsSheet,
-            content = uiState.termsContent,
-            onDismiss = { viewModel.toggleTermsView(false) }
-        )
+        // Terms/Privacy sheet
+        if (showTermsSheet) {
+            TermsSheet(
+                title = termsTitle,
+                content = termsContent,
+                onDismiss = { showTermsSheet = false }
+            )
+        }
+
+        // Loading indicator
+        if (state.isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = YellowMain
+            )
+        }
 
         // Snackbar
-        if (uiState.snackbarMessage != null) {
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                containerColor = Color(0xFF2A2A3E),
-                contentColor = Color.White
-            ) {
-                Text(uiState.snackbarMessage!!)
-            }
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
 @Composable
-private fun ProfileHeader(
-    onGetProClick: () -> Unit,
-    showProButton: Boolean
+fun ProfileHeader(
+    isSubscribed: Boolean,
+    onGetProClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -143,25 +208,27 @@ private fun ProfileHeader(
             text = "profile",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = Color.White,
+            fontFamily = RushonGroundFamily
         )
 
-        if (showProButton) {
+        if (!isSubscribed) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable(onClick = onGetProClick)
             ) {
-                Icon(
-                    painter = painterResource("drawable/crown_pro.png"),
+                Image(
+                    painter = painterResource(Res.drawable.crown_pro),
                     contentDescription = "Get Pro",
-                    modifier = Modifier.size(30.dp),
-                    tint = Color(0xFFFFD700)
+                    modifier = Modifier.size(30.dp)
                 )
+                Spacer(modifier = Modifier.height(5.dp))
                 Text(
                     text = "Get pro",
                     fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontFamily = NunitoBlackFamily
                 )
             }
         }
@@ -169,15 +236,14 @@ private fun ProfileHeader(
 }
 
 @Composable
-private fun LoggedInContent(
-    uiState: ProfileUiState,
+fun LoggedInContent(
+    state: ProfileState,
     onAccountDetailsClick: () -> Unit,
-    onContactClick: () -> Unit,
-    onTermsClick: () -> Unit,
-    onPrivacyClick: () -> Unit,
-    onShareClick: () -> Unit,
-    onRateClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onContactUsClick: () -> Unit,
+    onShareAppClick: () -> Unit,
+    onRateAppClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onShowTerms: (String, String) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -185,120 +251,106 @@ private fun LoggedInContent(
     ) {
         // Profile picture with crown
         Box(
-            modifier = Modifier.size(100.dp),
-            contentAlignment = Alignment.TopEnd
+            modifier = Modifier.size(100.dp)
         ) {
             AsyncImage(
-                model = uiState.userAvatar,
+                model = state.avatarUrl,
                 contentDescription = "Profile Picture",
                 modifier = Modifier
                     .size(90.dp)
                     .clip(CircleShape)
                     .align(Alignment.Center),
                 contentScale = ContentScale.Crop,
-                placeholder = painterResource("drawable/head_placeholder.png"),
-                error = painterResource("drawable/head_placeholder.png")
+                placeholder = painterResource(Res.drawable.head_placeholder)
             )
 
-            if (uiState.isSubscribed) {
-                Icon(
-                    painter = painterResource("drawable/crown_pro.png"),
+            if (state.isSubscribed) {
+                Image(
+                    painter = painterResource(Res.drawable.crown_pro),
                     contentDescription = "Premium",
                     modifier = Modifier
                         .size(30.dp)
+                        .align(Alignment.TopEnd)
                         .offset(x = 5.dp, y = (-7).dp)
-                        .rotate(45f),
-                    tint = Color(0xFFFFD700)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Username
-        if (uiState.isLoadingUser) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = Color(0xFFFF4444)
-            )
-        } else {
-            Text(
-                text = uiState.username ?: "User",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
+        Box(
+            modifier = Modifier.height(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (state.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(15.dp),
+                    color = YellowMain
+                )
+            } else {
+                Text(
+                    text = state.username ?: "",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White,
+                    fontFamily = NunitoMediumFamily
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(30.dp))
 
         // Menu items
         ProfileMenuItem(
-            icon = "drawable/user_circle.png",
+            icon = Res.drawable.user_circle,
             text = "Account details",
             onClick = onAccountDetailsClick
         )
 
         ProfileMenuItem(
-            icon = "drawable/contact.png",
+            icon = Res.drawable.contact,
             text = "Contact Us (gmail)",
-            onClick = onContactClick
+            onClick = onContactUsClick
         )
 
         ProfileMenuItem(
-            icon = "drawable/terms_of_use.png",
+            icon = Res.drawable.terms_of_use,
             text = "Terms of use",
-            onClick = onTermsClick
+            onClick = { onShowTerms("Terms of Service", getTermsContent()) }
         )
 
         ProfileMenuItem(
-            icon = "drawable/shield.png",
+            icon = Res.drawable.shield,
             text = "Privacy policy",
-            onClick = onPrivacyClick
+            onClick = { onShowTerms("Privacy Policy", getPrivacyContent()) }
         )
 
         ProfileMenuItem(
-            icon = "drawable/share_app.png",
+            icon = Res.drawable.share_app,
             text = "Share app",
-            onClick = onShareClick
+            onClick = onShareAppClick
         )
 
         ProfileMenuItem(
-            icon = "drawable/rate_app.png",
+            icon = Res.drawable.rate_app,
             text = "Rate app",
-            onClick = onRateClick
+            onClick = onRateAppClick
         )
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Logout button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onLogoutClick)
-                .padding(horizontal = 30.dp, vertical = 15.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource("drawable/log_out_image.png"),
-                contentDescription = "Logout",
-                modifier = Modifier.size(24.dp),
-                tint = Color.Red
-            )
-            Spacer(modifier = Modifier.width(20.dp))
-            Icon(
-                painter = painterResource("drawable/logout.png"),
-                contentDescription = "Logout Text",
-                modifier = Modifier.height(20.dp),
-                tint = Color.White
-            )
-        }
+        ProfileMenuItem(
+            icon = Res.drawable.log_out_image,
+            text = "Log out",
+            onClick = onLogoutClick
+        )
     }
 }
 
 @Composable
-private fun ProfileMenuItem(
-    icon: String,
+fun ProfileMenuItem(
+    icon: Any,
     text: String,
     onClick: () -> Unit
 ) {
@@ -309,11 +361,10 @@ private fun ProfileMenuItem(
             .padding(horizontal = 30.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            painter = painterResource(icon),
+        Image(
+            painter = painterResource(icon as org.jetbrains.compose.resources.DrawableResource),
             contentDescription = text,
-            modifier = Modifier.size(24.dp),
-            tint = Color.White
+            modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(20.dp))
         Text(
@@ -321,19 +372,19 @@ private fun ProfileMenuItem(
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            fontFamily = NunitoSemiBoldFamily
         )
-        Icon(
-            painter = painterResource("drawable/account_arrow.png"),
+        Image(
+            painter = painterResource(Res.drawable.account_arrow),
             contentDescription = "Navigate",
-            modifier = Modifier.size(20.dp),
-            tint = Color.Gray
+            modifier = Modifier.size(24.dp)
         )
     }
 }
 
 @Composable
-private fun GuestContent(
+fun GuestContent(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
@@ -343,12 +394,14 @@ private fun GuestContent(
             .padding(horizontal = 25.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(100.dp))
+
         Text(
             text = "Guest mode active",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFFFFC107),
-            textAlign = TextAlign.Center
+            color = YellowMain,
+            fontFamily = RushonGroundFamily
         )
 
         Spacer(modifier = Modifier.height(15.dp))
@@ -356,8 +409,10 @@ private fun GuestContent(
         Text(
             text = "Sign up or login to unlock the full\nexperience!",
             fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
             color = Color.White,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            fontFamily = NunitoMediumFamily
         )
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -367,20 +422,18 @@ private fun GuestContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
+            shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent
             ),
-            shape = RoundedCornerShape(10.dp),
-            border = ButtonDefaults.outlinedButtonBorder.copy(
-                width = 1.dp,
-                brush = androidx.compose.ui.graphics.SolidColor(Color.White)
-            )
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White)
         ) {
             Text(
                 text = "Login",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = Color.White,
+                fontFamily = RushonGroundFamily
             )
         }
 
@@ -391,57 +444,138 @@ private fun GuestContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
+            shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent
             ),
-            shape = RoundedCornerShape(10.dp),
-            border = ButtonDefaults.outlinedButtonBorder.copy(
-                width = 1.dp,
-                brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFC107))
-            )
+            border = androidx.compose.foundation.BorderStroke(1.dp, YellowMain)
         ) {
             Text(
                 text = "Create Account",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFFFC107)
+                color = YellowMain,
+                fontFamily = RushonGroundFamily
             )
         }
     }
 }
 
 @Composable
-private fun BottomSheet(
-    isVisible: Boolean,
+fun TermsSheet(
+    title: String,
     content: String,
     onDismiss: () -> Unit
 ) {
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = expandVertically(expandFrom = Alignment.Bottom),
-        exit = shrinkVertically(shrinkTowards = Alignment.Bottom)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable(onClick = onDismiss)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.7f)
-                .background(
-                    Color(0xFF2A2A3E),
-                    RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-                )
-                .clickable(onClick = onDismiss)
+                .align(Alignment.BottomCenter)
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(DarkGrayCard)
+                .padding(16.dp)
+                .clickable(enabled = false) { }
         ) {
-            val scrollState = rememberScrollState()
+            Text(
+                text = title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 16.dp),
+                fontFamily = NunitoBoldFamily
+            )
 
             Text(
                 text = content,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(scrollState),
+                fontSize = 14.sp,
                 color = Color.White,
-                fontSize = 14.sp
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                fontFamily = NunitoMediumFamily
             )
         }
     }
 }
+
+fun getTermsContent(): String {
+    return """
+1. Introduction
+Welcome to ForeSport. By using our app, you agree to these Terms of Service.
+
+2. User Information
+We collect and store user information, including names, emails, and passwords. By using our app, you consent to this data collection.
+
+3. Predictions Disclaimer
+We provide predictions for SportyBet, 1xBet, Bet9ja, and BetKing. However, we are not responsible for any bets you place outside our app using these predictions.
+
+4. Subscriptions & Ads
+Our app includes subscriptions and advertisements to support our services.
+
+5. No Refunds
+All purchases and subscriptions are non-refundable. Please review your choices before making a payment.
+
+6. Non-Transferable Subscriptions
+Subscriptions are device-specific and cannot be transferred to another device. Even if an account is premium, it will only remain premium on the original device where the subscription was made.
+
+7. Notifications
+We may send notifications related to your account, updates, and promotions.
+
+8. Data Storage
+Your information is securely stored in our database.
+
+9. Changes to Terms
+We reserve the right to update these Terms at any time. Continued use of our app constitutes acceptance of the updated Terms.
+
+10. Contact Us
+If you have any questions about these Terms, please contact us.
+    """.trimIndent()
+}
+
+fun getPrivacyContent(): String {
+    return """
+1. Introduction
+Welcome to ForeSport. This Privacy Policy explains how we collect, use, and protect your personal information.
+
+2. Information We Collect
+We collect and store the following user data: names, emails, and passwords. By using our app, you consent to this data collection.
+
+3. Use of Information
+Your information is used for account management, security, and personalized experiences within the app.
+
+4. Predictions Disclaimer
+We provide predictions for SportyBet, 1xBet, Bet9ja, and BetKing. However, we are not responsible for any bets you place outside our app using these predictions.
+
+5. Subscriptions & Ads
+Our app includes subscriptions and advertisements to support our services.
+
+6. No Refunds
+All purchases and subscriptions are non-refundable. Please review your choices before making a payment.
+
+7. Non-Transferable Subscriptions
+Subscriptions are device-specific and cannot be transferred to another device.
+
+8. Notifications
+We may send notifications related to your account, updates, and promotions.
+
+9. Data Storage
+Your personal information is securely stored in our database and protected from unauthorized access.
+
+10. Changes to This Policy
+We reserve the right to update this Privacy Policy at any time. Continued use of our app constitutes acceptance of the updated policy.
+
+11. Contact Us
+If you have any questions regarding this Privacy Policy, please contact us.
+    """.trimIndent()
+}
+
+val DarkGrayBackground = Color(0xFF1A1A2E)
+val DarkGrayCard = Color(0xFF16213E)
+val YellowMain = Color(0xFFFBBF24)

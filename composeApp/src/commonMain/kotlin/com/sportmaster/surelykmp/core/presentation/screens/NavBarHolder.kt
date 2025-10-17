@@ -16,6 +16,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,9 @@ import com.sportmaster.surelykmp.activities.matches.presentation.screens.AiPredi
 import com.sportmaster.surelykmp.activities.matches.presentation.screens.MatchesScreen
 import com.sportmaster.surelykmp.activities.matches.presentation.viewmodel.MatchesViewModel
 import com.sportmaster.surelykmp.activities.premiumcodes.presentation.screens.CodesScreenPremium
+import com.sportmaster.surelykmp.activities.profile.presentation.screens.ProfileScreen
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileAction
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileViewModel
 import com.sportmaster.surelykmp.activities.register.presentation.screens.RegisterScreen
 import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.RegisterViewModel
 //import com.sportmaster.surelykmp.di.AppModule
@@ -207,8 +211,16 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                 composable(Screen.FreeCodes.route) { FreeCodes() }
                 composable(Screen.Matches.route) { Matches(navController) }
                 composable(Screen.PremiumCodes.route) { PremiumCodes() }
-                composable(Screen.Account.route) { AccountScreen(navController) }
+                composable(Screen.Account.route)  { ProfileScreenContainer(navController) }
 
+                composable(Screen.Register.route) {
+                    RegisterScreenContainer(navController)
+                }
+
+                // Login screen (navigated to from Profile when in guest mode)
+                composable(Screen.Login.route) {
+                    LoginScreenContainer(navController)
+                }
                 composable(
                     route = "${Screen.AiPredictions.route}/{matchId}",
                     arguments = listOf(navArgument("matchId") { type = NavType.StringType })
@@ -220,6 +232,8 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
         }
     }
 }
+
+//
 
 @Composable
 fun AccountScreen(navController: NavController) {
@@ -256,6 +270,69 @@ fun Matches(navController: NavController) {
 }
 
 
+
+@Composable
+fun ProfileScreenContainer(navController: NavController) {
+    val viewModel: ProfileViewModel = koinInject()
+
+    // Reload profile whenever we navigate to this screen
+    LaunchedEffect(navController.currentBackStackEntry) {
+        println("ProfileScreenContainer - Triggering profile reload")
+        viewModel.onAction(ProfileAction.OnLoadUserProfile)
+    }
+
+    ProfileScreen(
+        navController = navController,
+        viewModel = viewModel
+    )
+}
+
+@Composable
+fun RegisterScreenContainer(navController: NavController) {
+    val viewModel: RegisterViewModel = koinInject()
+
+    // Set initial mode to Register
+    LaunchedEffect(Unit) {
+        if (viewModel.isLoginMode.value) {
+            viewModel.toggleMode()
+        }
+    }
+
+    RegisterScreen(
+        viewModel = viewModel,
+        onNavigateBack = { navController.popBackStack() },
+        onLoginSuccess = {
+            println("RegisterScreenContainer - Registration/Login success, navigating to profile")
+            // Navigate back to profile after successful registration/login
+            navController.popBackStack(Screen.Account.route, inclusive = false)
+        }
+    )
+}
+
+@Composable
+fun LoginScreenContainer(navController: NavController) {
+    val viewModel: RegisterViewModel = koinInject()
+
+    // Set initial mode to Login
+    LaunchedEffect(Unit) {
+        if (!viewModel.isLoginMode.value) {
+            viewModel.toggleMode()
+        }
+    }
+
+    RegisterScreen(
+        viewModel = viewModel,
+        onNavigateBack = { navController.popBackStack() },
+        onLoginSuccess = {
+            println("LoginScreenContainer - Login success, navigating to profile")
+            // Navigate back to profile after successful login
+            navController.navigate(Screen.Account.route) {
+                popUpTo(Screen.Account.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    )
+}
 
 @Composable
 fun AiPredictions(

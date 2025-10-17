@@ -4,6 +4,7 @@ package com.sportmaster.surelykmp.activities.register.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sportmaster.surelykmp.activities.profile.data.preferences.UserPreferences
 import com.sportmaster.surelykmp.core.data.model.AuthState
 import com.sportmaster.surelykmp.core.domain.usecase.*
 import com.sportmaster.surelykmp.core.data.remote.Result
@@ -12,7 +13,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.io.IOException
+
 
 
 class RegisterViewModel(
@@ -22,7 +25,8 @@ class RegisterViewModel(
     private val sendOtpUseCase: SendOtpUseCase,
     private val checkEmailAvailabilityUseCase: CheckEmailAvailabilityUseCase,
     private val checkUsernameAvailabilityUseCase: CheckUsernameAvailabilityUseCase,
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -42,6 +46,10 @@ class RegisterViewModel(
 
     private val _isEmailLoginMode = MutableStateFlow(true)
     val isEmailLoginMode: StateFlow<Boolean> = _isEmailLoginMode.asStateFlow()
+
+    init {
+//        println("RegisterViewModel initialized - UserPreferences: ${Clock.System.identityHashCode(userPreferences)}")
+    }
 
     fun toggleMode() {
         _isLoginMode.value = !_isLoginMode.value
@@ -137,17 +145,14 @@ class RegisterViewModel(
 
         viewModelScope.launch {
             try {
-                // Read image bytes from URI path using platform-specific repository
                 val imageBytes = imageRepository.readImageBytes(imageUri)
                 if (imageBytes == null) {
                     _authState.value = AuthState.Error("Failed to read image file")
                     return@launch
                 }
 
-                // Register user with image bytes
                 when (val result = registerUserUseCase(username, email, password, imageBytes)) {
                     is Result.Success -> {
-                        // Send OTP after successful registration
                         when (val otpResult = sendOtpUseCase(email, username)) {
                             is Result.Success -> {
                                 _authState.value = AuthState.OtpSent
@@ -197,11 +202,29 @@ class RegisterViewModel(
         val email = if (isEmail) usernameOrEmail else ""
 
         viewModelScope.launch {
+            println("========================================")
+            println("RegisterViewModel - Starting login")
+            println("Username: $username, Email: $email")
+            println("========================================")
+
             when (val result = loginUserUseCase(username, email, password)) {
                 is Result.Success -> {
+                    println("RegisterViewModel - Login SUCCESS")
+
+                    // Verify data was saved
+                    println("RegisterViewModel - Checking saved data:")
+//                    userPreferences.debugPrintAll()
+
+                    // Small delay to ensure persistence
+                    kotlinx.coroutines.delay(200)
+
+                    println("RegisterViewModel - After delay:")
+//                    userPreferences.debugPrintAll()
+
                     _authState.value = AuthState.Success("Login successful")
                 }
                 is Result.Error -> {
+                    println("RegisterViewModel - Login FAILED: ${result.error}")
                     _authState.value = AuthState.Error(result.error.toErrorMessage())
                 }
             }
@@ -283,7 +306,6 @@ class RegisterViewModel(
     }
 }
 
-// Create this interface in your common module
 interface ImageRepository {
     suspend fun readImageBytes(imagePath: String): ByteArray?
 }
