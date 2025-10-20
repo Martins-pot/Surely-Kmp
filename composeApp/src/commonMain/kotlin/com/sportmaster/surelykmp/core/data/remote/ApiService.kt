@@ -1,7 +1,10 @@
 package com.sportmaster.surelykmp.core.data.remote
 
 import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
+import com.sportmaster.surelykmp.activities.freecodes.data.model.Comment
+import com.sportmaster.surelykmp.activities.freecodes.data.model.Rating
 import com.sportmaster.surelykmp.activities.profile.data.User
+import com.sportmaster.surelykmp.activities.profile.data.preferences.UserPreferences
 import com.sportmaster.surelykmp.core.data.model.AuthResponse
 import com.sportmaster.surelykmp.core.data.model.LoginRequest
 import com.sportmaster.surelykmp.core.data.model.OtpSendRequest
@@ -18,10 +21,14 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.parameters
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class CodesApiService(
     private val client: HttpClient
-) {
+) : KoinComponent {
+
+    private val userPreferences: UserPreferences by inject()
     companion object {
         private const val BASE_URL = "https://srv442638.hstgr.cloud"
         private const val CODES_ENDPOINT = "$BASE_URL/codes/"
@@ -40,6 +47,134 @@ class CodesApiService(
             }
         }
     }
+
+
+    // commonMain/kotlin/data/remote/CodesApiService.kt
+
+
+    suspend fun addComment(
+        codeId: String,
+        commentText: String
+    ): Result<Comment, DataError.Remote> {
+        return try {
+            val response: Comment = executeWithAuthRetry { token ->
+                client.post("$BASE_URL/codes/add_comment/$codeId") {
+                    contentType(ContentType.Application.Json)
+                    bearerAuth(token)
+                    setBody(mapOf("comment" to commentText))
+                }.body()
+            }
+            Result.Success(response)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.Error(DataError.Remote.UNKNOWN)
+        }
+    }
+
+    suspend fun addRating(
+        codeId: String,
+        rating: Double
+    ): Result<Unit, DataError.Remote> {
+        return try {
+            executeWithAuthRetry { token ->
+                client.post("$BASE_URL/codes/add_rating/$codeId") {
+                    contentType(ContentType.Application.Json)
+                    bearerAuth(token)
+                    setBody(Rating(rating = rating))
+                }
+            }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.Error(DataError.Remote.UNKNOWN)
+        }
+    }
+
+    private suspend fun <T> executeWithAuthRetry(
+        request: suspend (String) -> T
+    ): T {
+        var accessToken = userPreferences.accessToken ?: throw Exception("Not authenticated")
+
+        return try {
+            // First attempt with current token
+            request(accessToken)
+        } catch (e: Exception) {
+            // If token might be expired, try to refresh
+            if (e.message?.contains("401") == true || e.message?.contains("403") == true) {
+                val newToken = refreshAccessToken()
+                // Retry with new token
+                request(newToken)
+            } else {
+                throw e
+            }
+        }
+    }
+
+    private suspend fun refreshAccessToken(): String {
+        val refreshToken = userPreferences.refreshToken ?: throw Exception("No refresh token available")
+
+        try {
+            val response: AuthResponse = client.post("$BASE_URL/user/refresh") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("refresh_token" to refreshToken))
+            }.body()
+
+            // Save new tokens
+            response.accessToken?.let { userPreferences.accessToken = it }
+            response.refreshToken?.let { userPreferences.refreshToken = it }
+
+            return response.accessToken ?: throw Exception("No access token in refresh response")
+        } catch (e: Exception) {
+            // If refresh fails, clear user data (force logout)
+            userPreferences.clearUserData()
+            throw Exception("Token refresh failed: ${e.message}")
+        }
+    }
+
+
+    suspend fun getCodeById(codeId: String): Result<Code, DataError.Remote> {
+        return try {
+            val allCodesResult = getAllCodes()
+            when (allCodesResult) {
+                is Result.Success -> {
+                    val code = allCodesResult.data.find { it._id == codeId }
+                    if (code != null) {
+                        Result.Success(code)
+                    } else {
+                        Result.Error(DataError.Remote.UNKNOWN)
+                    }
+                }
+                is Result.Error -> allCodesResult
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.Error(DataError.Remote.UNKNOWN)
+        }
+    }
+
+
+    suspend fun getUserByEmail(email: String): Result<User, DataError.Remote> {
+        return try {
+            val result = getAllUsers()
+            when (result) {
+                is Result.Success -> {
+                    val user = result.data.find {
+                        it.email.equals(email, ignoreCase = true)
+                    }
+                    if (user != null) {
+                        Result.Success(user)
+                    } else {
+                        Result.Error(DataError.Remote.USER_NOT_FOUND)
+                    }
+                }
+                is Result.Error -> result
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.Error(DataError.Remote.UNKNOWN)
+        }
+    }
+
 
     suspend fun checkEmailAvailability(email: String): Result<Boolean, DataError.Remote> {
         return try {

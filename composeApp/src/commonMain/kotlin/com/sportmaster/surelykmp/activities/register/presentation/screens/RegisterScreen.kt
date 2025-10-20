@@ -522,7 +522,7 @@ fun LoginForm(
                 color = Color.White,
                 modifier = Modifier.clickable {
                     viewModel.resetState()
-                    navController.navigate(Screen.ChangePassword.route) }
+                    navController.navigate(Screen.ForgotPassword.route) }
             )
         }
 

@@ -3,6 +3,8 @@ package com.sportmaster.surelykmp.core.presentation.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +13,9 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -37,6 +42,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.mertswork.footyreserve.ui.theme.BlackFaded
 import com.mertswork.footyreserve.ui.theme.DarkGrayBackground
+import com.sportmaster.surelykmp.activities.comment.presentation.screens.CommentScreen
+import com.sportmaster.surelykmp.activities.comment.presentation.viewmodels.CommentViewModel
+import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
 import com.sportmaster.surelykmp.activities.freecodes.presentation.screens.CodesScreen
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.PremiumCodesViewModel
@@ -44,6 +52,7 @@ import com.sportmaster.surelykmp.activities.matches.presentation.screens.AiPredi
 import com.sportmaster.surelykmp.activities.matches.presentation.screens.MatchesScreen
 import com.sportmaster.surelykmp.activities.matches.presentation.viewmodel.MatchesViewModel
 import com.sportmaster.surelykmp.activities.premiumcodes.presentation.screens.CodesScreenPremium
+import com.sportmaster.surelykmp.activities.profile.data.preferences.UserPreferences
 import com.sportmaster.surelykmp.activities.profile.presentation.screens.AccountDetailsScreen
 import com.sportmaster.surelykmp.activities.profile.presentation.screens.ChangePasswordScreen
 import com.sportmaster.surelykmp.activities.profile.presentation.screens.ProfileScreen
@@ -53,8 +62,11 @@ import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.Chan
 import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ChangePasswordViewModel
 import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileAction
 import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileViewModel
+import com.sportmaster.surelykmp.activities.register.presentation.screens.ForgotPasswordScreen
 import com.sportmaster.surelykmp.activities.register.presentation.screens.RegisterScreen
+import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.ForgotPasswordViewModel
 import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.RegisterViewModel
+import com.sportmaster.surelykmp.core.data.remote.CodesApiService
 //import com.sportmaster.surelykmp.di.AppModule
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -70,6 +82,7 @@ import surelykmp.composeapp.generated.resources.unselected_free_codes
 import surelykmp.composeapp.generated.resources.unselected_matches
 import surelykmp.composeapp.generated.resources.unselected_premium_codes
 import surelykmp.composeapp.generated.resources.unselected_profile
+import com.sportmaster.surelykmp.core.data.remote.Result
 
 data class BottomNavigationItem(
     val title: String,
@@ -214,9 +227,9 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                 startDestination = startDestination,
                 modifier = Modifier.padding(paddingValues)
             ) {
-                composable(Screen.FreeCodes.route) { FreeCodes() }
+                composable(Screen.FreeCodes.route) { FreeCodes(navController) }
                 composable(Screen.Matches.route) { Matches(navController) }
-                composable(Screen.PremiumCodes.route) { PremiumCodes() }
+                composable(Screen.PremiumCodes.route) { PremiumCodes(navController) }
                 composable(Screen.Account.route)  { ProfileScreenContainer(navController) }
 
 
@@ -233,6 +246,24 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                 composable(Screen.Login.route) {
                     LoginScreenContainer(navController)
                 }
+
+
+                composable(Screen.ForgotPassword.route) {
+                    ForgotPasswordScreenContainer(navController)
+                }
+
+                composable(
+                    route = "${Screen.CommentScreen.route}/{codeId}",
+                    arguments = listOf(navArgument("codeId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val codeId = backStackEntry.arguments?.getString("codeId") ?: ""
+                    CommentScreenContainer(
+                        codeId = codeId,
+                        navController = navController
+                    )
+                }
+
+
                 composable(
                     route = "${Screen.AiPredictions.route}/{matchId}",
                     arguments = listOf(navArgument("matchId") { type = NavType.StringType })
@@ -245,7 +276,120 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
     }
 }
 
+@Composable
+fun CommentScreenContainer(
+    codeId: String,
+    navController: NavController
+) {
+    val apiService: CodesApiService = koinInject()
+    val userPreferences: UserPreferences = koinInject()
+    var code by remember { mutableStateOf<Code?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    // Get actual user data from preferences
+    val isLoggedIn = remember { userPreferences.isLoggedIn }
+    val isSubscribed = remember { userPreferences.isSubscriptionValid() }
+    val currentUser = remember { userPreferences.username ?: "" }
+    val currentUserAvatar = remember { userPreferences.avatar }
+
+    // Fetch the code when the screen loads
+    LaunchedEffect(codeId) {
+        isLoading = true
+        error = null
+
+        when (val result = apiService.getCodeById(codeId)) {
+            is Result.Success -> {
+                code = result.data
+                isLoading = false
+            }
+            is Result.Error -> {
+                error = "Failed to load code"
+                isLoading = false
+            }
+        }
+    }
+
+    // Loading state
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White)
+        }
+        return
+    }
+
+    // Error state
+    if (error != null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(error!!, color = Color.White)
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        isLoading = true
+                        error = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                ) {
+                    Text("Retry")
+                }
+            }
+        }
+        return
+    }
+
+    // Success state
+    if (code != null) {
+        val commentViewModel = remember(code) {
+            CommentViewModel(apiService, code!!)
+        }
+
+        CommentScreen(
+            viewModel = commentViewModel,
+            isLoggedIn = isLoggedIn,
+            isSubscribed = isSubscribed,
+            currentUser = currentUser,
+            currentUserAvatar = currentUserAvatar,
+            onBackClick = { navController.popBackStack() },
+            onCopyCode = { text ->
+                // Basic implementation - replace with your platform utils
+                println("Copy code: $text")
+            },
+            onShareCode = { text ->
+                // Basic implementation - replace with your platform utils
+                println("Share code: $text")
+            },
+            onSubscribeClick = {
+                navController.navigate(Screen.Subscription.route)
+            }
+        )
+    } else {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Code not found", color = Color.White)
+        }
+    }
+}
 //
+@Composable
+fun ForgotPasswordScreenContainer(navController: NavController) {
+    val viewModel: ForgotPasswordViewModel = koinInject()
+
+    ForgotPasswordScreen(
+        navController = navController,
+        viewModel = viewModel
+    )
+}
+
+
 
 @Composable
 fun AccountDetailsScreenContainer(navController: NavController) {
@@ -278,17 +422,27 @@ fun ChangePasswordScreenContainer(navController: NavController) {
 }
 
 @Composable
- fun FreeCodes(){
+fun FreeCodes(navController: NavController) {
+    val viewModel: CodesViewModel = koinInject()
 
-     val viewModel : CodesViewModel = koinInject()
-//    val viewModel = remember { AppModule.provideCodesViewModel() }
-    CodesScreen(viewModel = viewModel)
- }
+    CodesScreen(
+        viewModel = viewModel,
+        onCodeClick = { code ->
+            navController.navigate("${Screen.CommentScreen.route}/${code._id}")
+        }
+    )
+}
 
 @Composable
-fun PremiumCodes() {
+fun PremiumCodes(navController: NavController) {
     val viewModelPremium: PremiumCodesViewModel = koinInject()
-    CodesScreenPremium(viewModel = viewModelPremium)
+
+    CodesScreenPremium(
+        viewModel = viewModelPremium,
+        onCodeClick = { code ->
+            navController.navigate("${Screen.CommentScreen.route}/${code._id}")
+        }
+    )
 }
 
 @Composable
@@ -299,6 +453,7 @@ fun Matches(navController: NavController) {
         viewModel = viewModel
     )
 }
+
 
 
 

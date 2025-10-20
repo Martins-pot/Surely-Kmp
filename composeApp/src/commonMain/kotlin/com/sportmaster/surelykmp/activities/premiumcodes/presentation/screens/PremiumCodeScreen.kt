@@ -158,6 +158,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
 import kotlinx.coroutines.delay
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.CodeItem
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.SportTabSelector
@@ -170,7 +171,8 @@ import surelykmp.composeapp.generated.resources.background_texture
 
 @Composable
 fun CodesScreenPremium(
-    viewModel: PremiumCodesViewModel
+    viewModel: PremiumCodesViewModel,
+    onCodeClick: (Code) -> Unit = {}
 ) {
     val premiumState by viewModel.premiumState.collectAsState()
 
@@ -316,7 +318,7 @@ fun CodesScreenPremium(
                             CodeItem(
                                 code = code,
                                 onShare = {},
-                                onItemClick = {},
+                                onItemClick = { onCodeClick(code) },
 
                             )
                         }

@@ -61,6 +61,10 @@ class ProfileRepositoryImpl(
 
 
     }
+    override suspend fun getUserByEmail(email: String): Result<User, DataError.Remote> {
+        return apiService.getUserByEmail(email)
+    }
+
 
     override suspend fun isUserLoggedIn(): Boolean {
         return userPreferences.isLoggedIn

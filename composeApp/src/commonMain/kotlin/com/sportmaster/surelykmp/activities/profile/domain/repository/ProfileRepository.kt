@@ -25,4 +25,5 @@ interface ProfileRepository {
     suspend fun deleteUserAccount(userId: String): Result<Unit, DataError.Remote>
     suspend fun updateStoredPassword(password: String)
     suspend fun clearAllUserData()
+    suspend fun getUserByEmail(email: String): Result<User, DataError.Remote>
 }

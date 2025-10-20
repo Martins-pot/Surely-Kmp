@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.CodeItem
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.SportTabSelector
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
@@ -25,7 +26,8 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CodesScreen(
-    viewModel: CodesViewModel
+    viewModel: CodesViewModel,
+    onCodeClick: (Code) -> Unit = {},
 ) {
     // Pull-to-refresh state
     var isRefreshing by remember { mutableStateOf(false) }
@@ -137,7 +139,7 @@ fun CodesScreen(
                                 CodeItem(
                                     code = code,
                                     onShare = {},
-                                    onItemClick = {}
+                                    onItemClick = { onCodeClick(code) }
                                 )
                             }
 

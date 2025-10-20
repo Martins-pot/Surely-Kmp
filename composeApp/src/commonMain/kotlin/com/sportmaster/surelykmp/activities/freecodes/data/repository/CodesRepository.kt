@@ -13,4 +13,7 @@ class CodesRepository(
     suspend fun getAllCodes(): Result<List<Code>, DataError.Remote> {
         return apiService.getAllCodes()
     }
+    suspend fun getCodeById(codeId: String): Result<Code, DataError.Remote> {
+        return apiService.getCodeById(codeId)
+    }
 }

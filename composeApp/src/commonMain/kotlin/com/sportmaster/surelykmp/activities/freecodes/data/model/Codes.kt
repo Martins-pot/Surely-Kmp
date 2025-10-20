@@ -48,6 +48,12 @@ data class Comment(
     @SerialName("createdAt") val createdAt: String?,
     @SerialName("image") val image: String?
 )
+
+
+@Serializable
+data class Rating(
+    @SerialName("rating") val rating: Double
+)
 //
 //)
 //data class Codess(
