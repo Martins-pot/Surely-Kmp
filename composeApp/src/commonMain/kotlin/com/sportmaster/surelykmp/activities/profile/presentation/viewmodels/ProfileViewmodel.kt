@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.sportmaster.surelykmp.activities.profile.data.User
 import com.sportmaster.surelykmp.activities.profile.domain.repository.ProfileRepository
 import com.sportmaster.surelykmp.core.data.remote.Result // Add this import
+import com.sportmaster.surelykmp.utils.PlatformUtils
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -50,7 +51,8 @@ sealed interface ProfileEvent {
 }
 
 class ProfileViewModel(
-    private val repository: ProfileRepository
+    private val repository: ProfileRepository,
+    private val platformUtils: PlatformUtils
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileState())

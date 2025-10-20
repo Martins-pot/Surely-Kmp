@@ -211,15 +211,18 @@ class RegisterViewModel(
                 is Result.Success -> {
                     println("RegisterViewModel - Login SUCCESS")
 
+                    // SAVE PASSWORD TO PREFERENCES
+                    userPreferences.password = password
+
                     // Verify data was saved
                     println("RegisterViewModel - Checking saved data:")
-//                    userPreferences.debugPrintAll()
+                    println("Password saved: ${userPreferences.password != null}")
 
                     // Small delay to ensure persistence
                     kotlinx.coroutines.delay(200)
 
                     println("RegisterViewModel - After delay:")
-//                    userPreferences.debugPrintAll()
+                    println("Password: ${userPreferences.password}")
 
                     _authState.value = AuthState.Success("Login successful")
                 }
@@ -302,6 +305,8 @@ class RegisterViewModel(
             DataError.Remote.SERIALIZATION -> "Data error. Please try again."
             DataError.Remote.TOO_MANY_REQUESTS -> "Too many requests. Please wait a moment."
             DataError.Remote.UNKNOWN -> "An unexpected error occurred. Please try again."
+            DataError.Remote.USER_NOT_FOUND -> "User not found"
+            DataError.Remote.INVALID_CREDENTIALS -> "Incorrect password or username"
         }
     }
 }

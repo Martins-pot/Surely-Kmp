@@ -16,6 +16,8 @@ sealed interface DataError {
         SERVER,
         SERIALIZATION,
         TOO_MANY_REQUESTS,
+        USER_NOT_FOUND,
+        INVALID_CREDENTIALS,
         UNKNOWN
     }
 }
@@ -49,12 +51,11 @@ suspend inline fun <reified T> responseToResult(
         in 200..299 -> {
             try {
                 Result.Success(response.body<T>())
-            } catch (e: NoTransformationFoundException) {
+            } catch (e: Exception) {
                 Result.Error(DataError.Remote.SERIALIZATION)
             }
         }
-        408 -> Result.Error(DataError.Remote.REQUEST_TIMEOUT)
-        429 -> Result.Error(DataError.Remote.TOO_MANY_REQUESTS)
+        in 400..499 -> Result.Error(DataError.Remote.INVALID_CREDENTIALS)
         in 500..599 -> Result.Error(DataError.Remote.SERVER)
         else -> Result.Error(DataError.Remote.UNKNOWN)
     }

@@ -25,12 +25,11 @@ import com.sportmaster.surelykmp.core.data.model.AuthState
 import org.jetbrains.compose.resources.painterResource
 import surelykmp.composeapp.generated.resources.*
 import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavController
 import coil3.Uri
 import com.mertswork.footyreserve.ui.theme.Dimens
 import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.RegisterViewModel
-
-
-
+import com.sportmaster.surelykmp.core.presentation.screens.Screen
 
 @Composable
 fun RegisterScreen(
@@ -38,7 +37,8 @@ fun RegisterScreen(
     onNavigateBack: () -> Unit,
     onLoginSuccess: () -> Unit,
     onNavigateToLogin: (() -> Unit)? = null,
-    onNavigateToRegister: (() -> Unit)? = null
+    onNavigateToRegister: (() -> Unit)? = null,
+    navController: NavController
 ) {
     var showOtpScreen by remember { mutableStateOf(false) }
     var registeredEmail by remember { mutableStateOf("") }
@@ -47,14 +47,25 @@ fun RegisterScreen(
     val authState by viewModel.authState.collectAsState()
     val isLoginMode by viewModel.isLoginMode.collectAsState()
 
+    // Track current destination to prevent unwanted navigation
+    var currentDestination by remember { mutableStateOf("login") }
+
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.OtpSent -> {
                 showOtpScreen = true
+                currentDestination = "otp"
             }
             is AuthState.Success -> {
-                if (!showOtpScreen) {
+                // Only navigate to profile if we're on login screen and login was successful
+                if (currentDestination == "login" && isLoginMode) {
                     onLoginSuccess()
+                    viewModel.resetState()
+                }
+                // For OTP verification success, just close OTP screen
+                else if (currentDestination == "otp") {
+                    showOtpScreen = false
+                    currentDestination = "register"
                     viewModel.resetState()
                 }
             }
@@ -78,38 +89,55 @@ fun RegisterScreen(
                 viewModel = viewModel,
                 onBack = {
                     showOtpScreen = false
+                    currentDestination = "register"
                     viewModel.resetState()
                 },
                 onVerified = {
                     showOtpScreen = false
+                    currentDestination = "register"
+                    viewModel.resetState()
                 }
             )
-            isLoginMode -> LoginForm(
-                viewModel = viewModel,
-                onNavigateBack = onNavigateBack,
-                onToggleMode = {
-                    if (onNavigateToRegister != null) {
-                        onNavigateToRegister()
-                    } else {
-                        viewModel.toggleMode()
+            isLoginMode -> {
+                // Update current destination when showing login form
+                LaunchedEffect(Unit) {
+                    currentDestination = "login"
+                }
+                LoginForm(
+                    viewModel = viewModel,
+                    onNavigateBack = onNavigateBack,
+                    onToggleMode = {
+                        if (onNavigateToRegister != null) {
+                            onNavigateToRegister()
+                        } else {
+                            viewModel.toggleMode()
+                        }
+                    },
+                    navController = navController
+                )
+            }
+            else -> {
+                // Update current destination when showing register form
+                LaunchedEffect(Unit) {
+                    currentDestination = "register"
+                }
+                RegisterForm(
+                    viewModel = viewModel,
+                    onNavigateBack = onNavigateBack,
+                    onToggleMode = {
+                        if (onNavigateToLogin != null) {
+                            onNavigateToLogin()
+                        } else {
+                            viewModel.toggleMode()
+                        }
+                    },
+                    onOtpSent = { email, username ->
+                        registeredEmail = email
+                        registeredUsername = username
+                        currentDestination = "otp"
                     }
-                }
-            )
-            else -> RegisterForm(
-                viewModel = viewModel,
-                onNavigateBack = onNavigateBack,
-                onToggleMode = {
-                    if (onNavigateToLogin != null) {
-                        onNavigateToLogin()
-                    } else {
-                        viewModel.toggleMode()
-                    }
-                },
-                onOtpSent = { email, username ->
-                    registeredEmail = email
-                    registeredUsername = username
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -349,7 +377,9 @@ fun RegisterForm(
 fun LoginForm(
     viewModel: RegisterViewModel,
     onNavigateBack: () -> Unit,
-    onToggleMode: () -> Unit
+    onToggleMode: () -> Unit,
+    navController: NavController
+
 ) {
     var usernameOrEmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -490,7 +520,9 @@ fun LoginForm(
                 text = "Forgotten password?",
                 fontSize = 10.sp,
                 color = Color.White,
-                modifier = Modifier.clickable { /* Handle forgot password */ }
+                modifier = Modifier.clickable {
+                    viewModel.resetState()
+                    navController.navigate(Screen.ChangePassword.route) }
             )
         }
 

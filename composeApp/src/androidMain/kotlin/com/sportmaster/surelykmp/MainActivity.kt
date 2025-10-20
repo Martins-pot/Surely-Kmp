@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.sportmaster.surelykmp.utils.AndroidPlatformUtils
 import com.sportmaster.surelykmp.utils.initializeStoreOpener
 
 class MainActivity : ComponentActivity() {
@@ -14,6 +15,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         initializeStoreOpener(this)
+        AndroidPlatformUtils.init(this)
+
         setContent {
             App()
         }

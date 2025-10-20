@@ -13,6 +13,8 @@ import com.sportmaster.surelykmp.activities.matches.presentation.viewmodel.Match
 import com.sportmaster.surelykmp.activities.profile.data.ProfileRepositoryImpl
 import com.sportmaster.surelykmp.activities.profile.data.preferences.UserPreferences
 import com.sportmaster.surelykmp.activities.profile.domain.repository.ProfileRepository
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.AccountDetailsViewModel
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ChangePasswordViewModel
 import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileViewModel
 import com.sportmaster.surelykmp.activities.register.presentation.viewmodels.RegisterViewModel
 import com.sportmaster.surelykmp.core.data.HttpClientFactory
@@ -75,6 +77,8 @@ val sharedModule = module {
     // ==================== ViewModels ====================
     viewModel { CodesViewModel(get(), get()) }
     viewModel { PremiumCodesViewModel(get(), get(), get()) }
+    viewModel { AccountDetailsViewModel(get()) }
+    viewModel { ChangePasswordViewModel(get()) }
     viewModel {
         MatchesViewModel(
             getMatchesUseCase = get(),
@@ -106,5 +110,5 @@ val sharedModule = module {
         )
     }
 
-    viewModel { ProfileViewModel(get()) }
+    viewModel { ProfileViewModel(get(), get()) }
 }

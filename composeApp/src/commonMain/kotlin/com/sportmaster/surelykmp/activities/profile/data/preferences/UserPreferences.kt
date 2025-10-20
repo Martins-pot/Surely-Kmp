@@ -4,6 +4,7 @@ package com.sportmaster.surelykmp.activities.profile.data.preferences
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.get
 import com.russhwolf.settings.set
+import io.ktor.util.date.getTimeMillis
 
 class UserPreferences(private val settings: Settings) {
 
@@ -21,7 +22,16 @@ class UserPreferences(private val settings: Settings) {
         private const val KEY_SUBSCRIPTION_END_TIME = "subscription_end_time"
         private const val KEY_SUBSCRIPTION_PRODUCT_ID = "subscription_product_id"
         private const val KEY_SUBSCRIPTION_TOKEN = "subscription_token"
+        private const val KEY_PASSWORD = "password"
     }
+
+
+    var password: String?
+        get() = settings.getStringOrNull(KEY_PASSWORD)
+        set(value) {
+            if (value != null) settings[KEY_PASSWORD] = value
+            else settings.remove(KEY_PASSWORD)
+        }
 
     // Login Status
     var isLoggedIn: Boolean
@@ -122,6 +132,7 @@ class UserPreferences(private val settings: Settings) {
         accessToken = null
         refreshToken = null
         rememberMe = false
+        password = null
     }
 
     fun clearSubscriptionData() {
@@ -141,7 +152,7 @@ class UserPreferences(private val settings: Settings) {
 
         return try {
             val endTime = subscriptionEndTime?.toLongOrNull() ?: return false
-            val currentTime = System.currentTimeMillis()
+            val currentTime = getTimeMillis()
             endTime > currentTime
         } catch (e: Exception) {
             false

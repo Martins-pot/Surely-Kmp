@@ -107,7 +107,7 @@ fun ProfileScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkGrayBackground)
+//                .background(DarkGrayBackground)
         )
         Image(
             painter = painterResource(Res.drawable.background_texture),
@@ -134,7 +134,7 @@ fun ProfileScreen(
                 println("ProfileScreen - Showing LoggedInContent")
                 LoggedInContent(
                     state = state,
-                    onAccountDetailsClick = { viewModel.onAction(ProfileAction.OnAccountDetailsClick) },
+                    onAccountDetailsClick = {  navController.navigate(Screen.AccountDetails.route) },
                     onContactUsClick = { viewModel.onAction(ProfileAction.OnContactUsClick) },
                     onShareAppClick = { viewModel.onAction(ProfileAction.OnShareAppClick) },
                     onRateAppClick = { viewModel.onAction(ProfileAction.OnRateAppClick) },
@@ -343,7 +343,8 @@ fun LoggedInContent(
         ProfileMenuItem(
             icon = Res.drawable.log_out_image,
             text = "Log out",
-            onClick = onLogoutClick
+            onClick = onLogoutClick,
+            colored = true
         )
     }
 }
@@ -352,7 +353,8 @@ fun LoggedInContent(
 fun ProfileMenuItem(
     icon: Any,
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    colored: Boolean? = null
 ) {
     Row(
         modifier = Modifier
@@ -371,14 +373,14 @@ fun ProfileMenuItem(
             text = text,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color.White,
+            color = if (colored == null) Color.White else Color.Red,
             modifier = Modifier.weight(1f),
             fontFamily = NunitoSemiBoldFamily
         )
         Image(
             painter = painterResource(Res.drawable.account_arrow),
             contentDescription = "Navigate",
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(14.dp)
         )
     }
 }

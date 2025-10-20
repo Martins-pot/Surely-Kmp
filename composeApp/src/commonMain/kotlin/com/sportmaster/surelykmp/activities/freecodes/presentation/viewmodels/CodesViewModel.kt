@@ -91,6 +91,8 @@ class CodesViewModel(
                         DataError.Remote.SERIALIZATION -> "Data parsing error"
                         DataError.Remote.TOO_MANY_REQUESTS -> "Too many requests"
                         DataError.Remote.UNKNOWN -> "Unknown error occurred"
+                        DataError.Remote.USER_NOT_FOUND -> "User not found"
+                        DataError.Remote.INVALID_CREDENTIALS -> "Incorrect password or username"
                     }
                 }
             }
@@ -123,6 +125,8 @@ class CodesViewModel(
                         DataError.Remote.SERIALIZATION -> "Data parsing error"
                         DataError.Remote.TOO_MANY_REQUESTS -> "Too many requests"
                         DataError.Remote.UNKNOWN -> "Unknown error occurred"
+                        DataError.Remote.USER_NOT_FOUND -> "User not found"
+                        DataError.Remote.INVALID_CREDENTIALS -> "Incorrect password or username"
                     }
                 }
             }

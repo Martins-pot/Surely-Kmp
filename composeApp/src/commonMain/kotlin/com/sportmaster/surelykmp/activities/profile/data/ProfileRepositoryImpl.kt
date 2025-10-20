@@ -3,6 +3,7 @@ package com.sportmaster.surelykmp.activities.profile.data
 import com.russhwolf.settings.Settings
 import com.sportmaster.surelykmp.activities.profile.data.preferences.UserPreferences
 import com.sportmaster.surelykmp.activities.profile.domain.repository.ProfileRepository
+import com.sportmaster.surelykmp.core.data.remote.CodesApiService
 import com.sportmaster.surelykmp.core.data.remote.DataError
 import com.sportmaster.surelykmp.core.data.remote.Result
 import io.ktor.client.*
@@ -33,6 +34,7 @@ class ProfileRepositoryImpl(
     private val userPreferences: UserPreferences
 ) : ProfileRepository {
 
+    private val apiService = CodesApiService(httpClient)
     companion object {
         private const val BASE_URL = "https://srv442638.hstgr.cloud"
     }
@@ -113,5 +115,46 @@ class ProfileRepositoryImpl(
 
     override suspend fun clearSubscriptionData() {
         userPreferences.clearSubscriptionData()
+    }
+
+    override suspend fun getEmail(): String? {
+        return userPreferences.email
+    }
+
+    override suspend fun getStoredPassword(): String? {
+        // You'll need to add password storage to UserPreferences
+        // For now, return null or implement if you have password storage
+        return null
+    }
+
+    override suspend fun updatePassword(userId: String, newPassword: String): Result<Unit, DataError.Remote> {
+        return apiService.updatePassword(userId, newPassword)
+    }
+
+    override suspend fun updateUserProfile(userId: String, newPassword: String?, imageBytes: ByteArray?): Result<Unit, DataError.Remote> {
+        val result = apiService.updateUserProfile(userId, newPassword, imageBytes)
+
+        // Update local storage if password was changed
+        if (newPassword != null && result is Result.Success) {
+            updateStoredPassword(newPassword)
+        }
+
+        return result
+    }
+
+    override suspend fun deleteUserAccount(userId: String): Result<Unit, DataError.Remote> {
+        val result = apiService.deleteUserAccount(userId)
+        if (result is Result.Success) {
+            clearAllUserData()
+        }
+        return result
+    }
+
+    override suspend fun updateStoredPassword(password: String) {
+        // Implement if you have password storage in UserPreferences
+    }
+
+    override suspend fun clearAllUserData() {
+        userPreferences.clearAll()
     }
 }

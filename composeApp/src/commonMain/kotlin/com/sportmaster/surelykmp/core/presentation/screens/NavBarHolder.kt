@@ -44,7 +44,13 @@ import com.sportmaster.surelykmp.activities.matches.presentation.screens.AiPredi
 import com.sportmaster.surelykmp.activities.matches.presentation.screens.MatchesScreen
 import com.sportmaster.surelykmp.activities.matches.presentation.viewmodel.MatchesViewModel
 import com.sportmaster.surelykmp.activities.premiumcodes.presentation.screens.CodesScreenPremium
+import com.sportmaster.surelykmp.activities.profile.presentation.screens.AccountDetailsScreen
+import com.sportmaster.surelykmp.activities.profile.presentation.screens.ChangePasswordScreen
 import com.sportmaster.surelykmp.activities.profile.presentation.screens.ProfileScreen
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.AccountDetailsAction
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.AccountDetailsViewModel
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ChangePasswordAction
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ChangePasswordViewModel
 import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileAction
 import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileViewModel
 import com.sportmaster.surelykmp.activities.register.presentation.screens.RegisterScreen
@@ -213,6 +219,12 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                 composable(Screen.PremiumCodes.route) { PremiumCodes() }
                 composable(Screen.Account.route)  { ProfileScreenContainer(navController) }
 
+
+                composable(Screen.AccountDetails.route) { AccountDetailsScreenContainer(navController) }
+                composable(Screen.ChangePassword.route) {
+                    ChangePasswordScreenContainer(navController)
+                }
+
                 composable(Screen.Register.route) {
                     RegisterScreenContainer(navController)
                 }
@@ -236,15 +248,34 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
 //
 
 @Composable
-fun AccountScreen(navController: NavController) {
-    val viewModel: RegisterViewModel = koinInject()
-    RegisterScreen(
-        viewModel = viewModel,
-        onNavigateBack = { navController.popBackStack() },
-        onLoginSuccess = { navController.popBackStack() }
+fun AccountDetailsScreenContainer(navController: NavController) {
+    val viewModel: AccountDetailsViewModel = koinInject()
+
+    // Load user data when screen appears
+    LaunchedEffect(navController.currentBackStackEntry) {
+        viewModel.onAction(AccountDetailsAction.LoadUserData)
+    }
+
+    AccountDetailsScreen(
+        navController = navController,
+        viewModel = viewModel
     )
 }
 
+@Composable
+fun ChangePasswordScreenContainer(navController: NavController) {
+    val viewModel: ChangePasswordViewModel = koinInject()
+
+    // Load user data when screen appears
+    LaunchedEffect(navController.currentBackStackEntry) {
+        viewModel.onAction(ChangePasswordAction.LoadUserData)
+    }
+
+    ChangePasswordScreen(
+        navController = navController,
+        viewModel = viewModel
+    )
+}
 
 @Composable
  fun FreeCodes(){
@@ -305,7 +336,9 @@ fun RegisterScreenContainer(navController: NavController) {
             println("RegisterScreenContainer - Registration/Login success, navigating to profile")
             // Navigate back to profile after successful registration/login
             navController.popBackStack(Screen.Account.route, inclusive = false)
-        }
+        },
+        navController = navController
+
     )
 }
 
@@ -330,7 +363,9 @@ fun LoginScreenContainer(navController: NavController) {
                 popUpTo(Screen.Account.route) { inclusive = true }
                 launchSingleTop = true
             }
-        }
+        },
+        navController = navController
+
     )
 }
 
