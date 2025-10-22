@@ -34,7 +34,7 @@ import org.jetbrains.compose.resources.painterResource
 import surelykmp.composeapp.generated.resources.Res
 import surelykmp.composeapp.generated.resources.background_texture
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun CommentScreen(
     viewModel: CommentViewModel,
@@ -68,227 +68,251 @@ fun CommentScreen(
     }
 
     val code = uiState.code ?: return
+
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
-        // Background
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkGrayBackground)
-        )
+        // Background with texture
         Image(
             painter = painterResource(Res.drawable.background_texture),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        Image(
-            painter = painterResource(Res.drawable.background_texture),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = code.text,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 18.sp
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(Icons.Default.ArrowBack, "Back")
-                        }
-                    },
-                    actions = {
-                        if (!isSubscribed) {
-                            IconButton(onClick = {
-                                if (isLoggedIn) {
-                                    onSubscribeClick()
-                                } else {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Log in to subscribe")
-                                    }
-                                }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = "Get Pro",
-                                    tint = Color(0xFFFFD700)
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF1A1A2E)
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Custom Top Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Back button
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        "Back",
+                        tint = Color.White
                     )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Title
+                Text(
+                    text = code.text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 16.sp,
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Subscribe button
+                if (!isSubscribed) {
+                    IconButton(
+                        onClick = {
+                            if (isLoggedIn) {
+                                onSubscribeClick()
+                            } else {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Log in to subscribe")
+                                }
+                            }
+                        },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Get Pro",
+                            tint = Color(0xFFFFD700)
+                        )
+                    }
+                } else {
+                    // Add invisible spacer to maintain balance when no subscribe button
+                    Spacer(modifier = Modifier.size(24.dp))
+                }
+            }
+
+            // Static Code Detail Section
+            CodeDetailsCard(
+                code = code,
+                selectedRating = uiState.selectedRating,
+                isLoggedIn = isLoggedIn,
+                isRatingLoading = uiState.isRating,
+                onRatingSelected = { viewModel.onRatingSelected(it) },
+                onRateClick = { viewModel.rateCode() },
+                onCopyClick = { onCopyCode(code.text) },
+                onShareClick = { onShareCode(code.text) }
+            )
+
+            // Comments Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Chat,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${code.comments.size}",
+                    color = Color.White,
+                    fontSize = 14.sp
                 )
             }
-        ) { padding ->
-            Box(modifier = modifier.fillMaxSize().padding(padding)) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-//                    contentPadding = PaddingValues(bottom = 120.dp)
-                ) {
-                    item {
-                        CodeDetailsCard(
-                            code = code,
-                            selectedRating = uiState.selectedRating,
-                            isLoggedIn = isLoggedIn,
-                            isRatingLoading = uiState.isRating,
-                            onRatingSelected = { viewModel.onRatingSelected(it) },
-                            onRateClick = { viewModel.rateCode() },
-                            onCopyClick = { onCopyCode(code.text) },
-                            onShareClick = { onShareCode(code.text) }
-                        )
-                    }
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = Color.Gray.copy(alpha = 0.3f)
+            )
 
-                    item {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Chat,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "${code.comments.size}",
-                                color = Color.White,
-                                fontSize = 14.sp
-                            )
-                        }
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                            color = Color.Gray.copy(alpha = 0.3f)
-                        )
-                    }
-
-                    items(code.comments) { comment ->
-                        CommentItem(comment = comment)
-                    }
+            // Scrollable Comments List
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 120.dp) // Space for input section
+            ) {
+                items(code.comments) { comment ->
+                    CommentItem(comment = comment)
                 }
+            }
+        }
 
-                // Comment input at bottom
-                Surface(
+        // Comment Input Section at absolute bottom
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(120.dp),
+            color = Color.Transparent
+        ) {
+            if (isLoggedIn) {
+                Row(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .height(120.dp),
-                    color = Color.Black
+                        .padding(horizontal = 30.dp, vertical = 30.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isLoggedIn) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 30.dp, vertical = 30.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = uiState.commentText,
-                                onValueChange = { viewModel.onCommentTextChanged(it) },
-                                modifier = Modifier.weight(1f),
-                                placeholder = { Text("Write a comment") },
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color.White,
-                                    unfocusedBorderColor = Color.Gray
-                                ),
-                                shape = RoundedCornerShape(30.dp),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                                keyboardActions = KeyboardActions(
-                                    onSend = {
-                                        if (uiState.commentText.isNotBlank()) {
-                                            viewModel.postComment(currentUser, currentUserAvatar)
-                                        }
-                                    }
-                                ),
-                                maxLines = 1,
-                                enabled = !uiState.isCommentPosting
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            if (uiState.isCommentPosting) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = Color(0xFF4CAF50)
-                                )
-                            } else {
-                                IconButton(
-                                    onClick = {
-                                        if (uiState.commentText.isNotBlank()) {
-                                            viewModel.postComment(currentUser, currentUserAvatar)
-                                        }
-                                    },
-                                    enabled = uiState.commentText.isNotBlank()
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Send,
-                                        contentDescription = "Send",
-                                        tint = if (uiState.commentText.isNotBlank())
-                                            Color(0xFF4CAF50) else Color.Gray
-                                    )
+                    OutlinedTextField(
+                        value = uiState.commentText,
+                        onValueChange = { viewModel.onCommentTextChanged(it) },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Write a comment") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.Gray,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            cursorColor = Color.White,
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.Gray,
+                            focusedPlaceholderColor = Color.Gray,
+                            unfocusedPlaceholderColor = Color.Gray
+                        ),
+                        shape = RoundedCornerShape(30.dp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(
+                            onSend = {
+                                if (uiState.commentText.isNotBlank()) {
+                                    viewModel.postComment(currentUser, currentUserAvatar)
                                 }
                             }
-                        }
+                        ),
+                        maxLines = 1,
+                        enabled = !uiState.isCommentPosting
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    if (uiState.isCommentPosting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color(0xFF4CAF50)
+                        )
                     } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 30.dp, vertical = 30.dp)
-                                .height(50.dp)
-                                .background(
-                                    color = Color.Gray.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(30.dp)
-                                )
-                                .clickable { },
-                            contentAlignment = Alignment.Center
+                        IconButton(
+                            onClick = {
+                                if (uiState.commentText.isNotBlank()) {
+                                    viewModel.postComment(currentUser, currentUserAvatar)
+                                }
+                            },
+                            enabled = uiState.commentText.isNotBlank()
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Log in to comment", color = Color.White)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = "Send",
+                                tint = if (uiState.commentText.isNotBlank())
+                                    Color(0xFF4CAF50) else Color.Gray
+                            )
                         }
                     }
                 }
-
-                // Loading overlay
-                if (uiState.isRating) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.7f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = Color.Red)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Rating, please wait", color = Color.White)
-                        }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 30.dp, vertical = 30.dp)
+                        .height(50.dp)
+                        .background(
+                            color = Color.Gray.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(30.dp)
+                        )
+                        .clickable { },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Log in to comment", color = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
         }
+
+        // Loading overlay
+        if (uiState.isRating) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = Color.Red)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Rating, please wait", color = Color.White)
+                }
+            }
+        }
+
+        // Snackbar
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 120.dp) // Above comment input
+        ) {
+            SnackbarHost(hostState = snackbarHostState)
+        }
     }
 }
-
 @Composable
 fun CodeDetailsCard(
     code: Code,

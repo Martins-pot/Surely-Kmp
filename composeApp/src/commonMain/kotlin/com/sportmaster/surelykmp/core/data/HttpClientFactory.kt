@@ -41,6 +41,16 @@ object HttpClientFactory {
                 connectTimeoutMillis = 20_000L
             }
 
+            // Add this to automatically throw exceptions on 4xx/5xx responses
+            HttpResponseValidator {
+                validateResponse { response ->
+                    val statusCode = response.status
+                    if (statusCode.value >= 400) {
+                        throw ClientRequestException(response, "HTTP error: $statusCode")
+                    }
+                }
+            }
+
             defaultRequest {
                 contentType(ContentType.Application.Json)
             }

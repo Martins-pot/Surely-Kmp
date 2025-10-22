@@ -14,10 +14,10 @@ data class RegisterRequest(
 
 @Serializable
 data class LoginRequest(
-    val username: String,
-    val email: String,
+    val username: String? = null,
+    val email: String? = null,
     val password: String,
-    @SerialName("device_token") val deviceToken: String
+    @SerialName("device_token") val deviceToken: String = ""
 )
 
 @Serializable

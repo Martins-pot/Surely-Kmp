@@ -195,11 +195,12 @@ class RegisterViewModel(
         }
     }
 
+
     fun login(usernameOrEmail: String, password: String, isEmail: Boolean) {
         _authState.value = AuthState.Loading
 
-        val username = if (isEmail) "" else usernameOrEmail
-        val email = if (isEmail) usernameOrEmail else ""
+        val username = if (isEmail) null else usernameOrEmail
+        val email = if (isEmail) usernameOrEmail else null
 
         viewModelScope.launch {
             println("========================================")
@@ -233,6 +234,44 @@ class RegisterViewModel(
             }
         }
     }
+//    fun login(usernameOrEmail: String, password: String, isEmail: Boolean) {
+//        _authState.value = AuthState.Loading
+//
+//        val username = if (isEmail) "" else usernameOrEmail
+//        val email = if (isEmail) usernameOrEmail else ""
+//
+//        viewModelScope.launch {
+//            println("========================================")
+//            println("RegisterViewModel - Starting login")
+//            println("Username: $username, Email: $email")
+//            println("========================================")
+//
+//            when (val result = loginUserUseCase(username, email, password)) {
+//                is Result.Success -> {
+//                    println("RegisterViewModel - Login SUCCESS")
+//
+//                    // SAVE PASSWORD TO PREFERENCES
+//                    userPreferences.password = password
+//
+//                    // Verify data was saved
+//                    println("RegisterViewModel - Checking saved data:")
+//                    println("Password saved: ${userPreferences.password != null}")
+//
+//                    // Small delay to ensure persistence
+//                    kotlinx.coroutines.delay(200)
+//
+//                    println("RegisterViewModel - After delay:")
+//                    println("Password: ${userPreferences.password}")
+//
+//                    _authState.value = AuthState.Success("Login successful")
+//                }
+//                is Result.Error -> {
+//                    println("RegisterViewModel - Login FAILED: ${result.error}")
+//                    _authState.value = AuthState.Error(result.error.toErrorMessage())
+//                }
+//            }
+//        }
+//    }
 
     fun resendOtp(email: String, username: String) {
         viewModelScope.launch {

@@ -9,18 +9,23 @@ import com.sportmaster.surelykmp.core.data.model.AuthResponse
 import com.sportmaster.surelykmp.core.data.model.LoginRequest
 import com.sportmaster.surelykmp.core.data.model.OtpSendRequest
 import com.sportmaster.surelykmp.core.data.model.UserResponse
+import com.sportmaster.surelykmp.utils.bearerAuth
 import io.ktor.client.*
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.forms.submitFormWithBinaryData
-import io.ktor.client.utils.EmptyContent.contentType
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.parameters
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -48,25 +53,29 @@ class CodesApiService(
         }
     }
 
-
-    // commonMain/kotlin/data/remote/CodesApiService.kt
-
-
     suspend fun addComment(
         codeId: String,
         commentText: String
     ): Result<Comment, DataError.Remote> {
         return try {
             val response: Comment = executeWithAuthRetry { token ->
-                client.post("$BASE_URL/codes/add_comment/$codeId") {
+                val httpResponse = client.post("$BASE_URL/codes/add_comment/$codeId") {
                     contentType(ContentType.Application.Json)
                     bearerAuth(token)
                     setBody(mapOf("comment" to commentText))
-                }.body()
+                }
+
+                // Manually check response status
+                if (httpResponse.status == HttpStatusCode.Unauthorized) {
+                    throw ClientRequestException(httpResponse, "Token expired")
+                }
+
+                httpResponse.body()
             }
             Result.Success(response)
         } catch (e: Exception) {
             e.printStackTrace()
+            println("Add comment error: ${e.message}")
             Result.Error(DataError.Remote.UNKNOWN)
         }
     }
@@ -77,15 +86,23 @@ class CodesApiService(
     ): Result<Unit, DataError.Remote> {
         return try {
             executeWithAuthRetry { token ->
-                client.post("$BASE_URL/codes/add_rating/$codeId") {
+                val httpResponse = client.post("$BASE_URL/codes/add_rating/$codeId") {
                     contentType(ContentType.Application.Json)
                     bearerAuth(token)
                     setBody(Rating(rating = rating))
                 }
+
+                // Manually check response status
+                if (httpResponse.status == HttpStatusCode.Unauthorized) {
+                    throw ClientRequestException(httpResponse, "Token expired")
+                }
+
+                httpResponse.body<Unit>()
             }
             Result.Success(Unit)
         } catch (e: Exception) {
             e.printStackTrace()
+            println("Add rating error: ${e.message}")
             Result.Error(DataError.Remote.UNKNOWN)
         }
     }
@@ -93,16 +110,34 @@ class CodesApiService(
     private suspend fun <T> executeWithAuthRetry(
         request: suspend (String) -> T
     ): T {
-        var accessToken = userPreferences.accessToken ?: throw Exception("Not authenticated")
+        var accessToken = userPreferences.accessToken
+            ?: throw Exception("Not authenticated")
 
         return try {
+            println("Making request with token...")
             // First attempt with current token
             request(accessToken)
-        } catch (e: Exception) {
-            // If token might be expired, try to refresh
-            if (e.message?.contains("401") == true || e.message?.contains("403") == true) {
+        } catch (e: ClientRequestException) {
+            println("Caught ClientRequestException: ${e.response.status} - ${e.message}")
+            if (e.response.status == HttpStatusCode.Unauthorized) {
+                println("Token expired, refreshing...")
                 val newToken = refreshAccessToken()
+                println("Token refreshed, retrying request...")
                 // Retry with new token
+                request(newToken)
+            } else {
+                println("Request failed with status: ${e.response.status}")
+                throw e
+            }
+        } catch (e: Exception) {
+            println("Caught generic exception: ${e::class.simpleName} - ${e.message}")
+            // If it's a generic exception but we suspect it's auth-related, try refresh
+            if (e.message?.contains("401") == true ||
+                e.message?.contains("unauthorized", ignoreCase = true) == true ||
+                e.message?.contains("token", ignoreCase = true) == true) {
+                println("Auth-related exception detected, attempting token refresh...")
+                val newToken = refreshAccessToken()
+                println("Token refreshed, retrying request...")
                 request(newToken)
             } else {
                 throw e
@@ -111,23 +146,42 @@ class CodesApiService(
     }
 
     private suspend fun refreshAccessToken(): String {
-        val refreshToken = userPreferences.refreshToken ?: throw Exception("No refresh token available")
+        val refreshToken = userPreferences.refreshToken
+            ?: throw Exception("No refresh token available")
 
         try {
-            val response: AuthResponse = client.post("$BASE_URL/user/refresh") {
+            println("Calling refresh endpoint with refresh token: ${refreshToken.take(10)}...")
+
+            // Create a simple data class for the refresh response
+            @Serializable
+            data class RefreshResponse(
+                @SerialName("access_token") val accessToken: String? = null,
+                @SerialName("token_type") val tokenType: String? = null
+            )
+
+            val response: RefreshResponse = client.post("$BASE_URL/user/refresh-token") {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf("refresh_token" to refreshToken))
+                setBody(mapOf("token" to refreshToken))
             }.body()
 
-            // Save new tokens
-            response.accessToken?.let { userPreferences.accessToken = it }
-            response.refreshToken?.let { userPreferences.refreshToken = it }
+            println("Refresh successful! New access token received")
 
-            return response.accessToken ?: throw Exception("No access token in refresh response")
+            response.accessToken?.let {
+                userPreferences.accessToken = it
+                println("New access token saved: ${it.take(10)}...")
+            }
+
+            // Note: The refresh token remains the same since it's not returned in the response
+            // Only update the access token
+
+            return response.accessToken
+                ?: throw Exception("No access token in refresh response")
+
         } catch (e: Exception) {
-            // If refresh fails, clear user data (force logout)
+            println("Token refresh failed: ${e::class.simpleName} - ${e.message}")
+            e.printStackTrace()
             userPreferences.clearUserData()
-            throw Exception("Token refresh failed: ${e.message}")
+            throw Exception("Session expired. Please log in again.")
         }
     }
 
@@ -152,7 +206,6 @@ class CodesApiService(
         }
     }
 
-
     suspend fun getUserByEmail(email: String): Result<User, DataError.Remote> {
         return try {
             val result = getAllUsers()
@@ -174,7 +227,6 @@ class CodesApiService(
             Result.Error(DataError.Remote.UNKNOWN)
         }
     }
-
 
     suspend fun checkEmailAvailability(email: String): Result<Boolean, DataError.Remote> {
         return try {
@@ -264,24 +316,62 @@ class CodesApiService(
         }
     }
 
+
     suspend fun login(
-        username: String,
-        email: String,
+        username: String? = null,
+        email: String? = null,
         password: String,
-        deviceToken: String
+        deviceToken: String = ""
     ): Result<AuthResponse, DataError.Remote> {
         return try {
-            val request = LoginRequest(username, email, password, deviceToken)
+            // Validate that either username or email is provided, but not both
+            if (username == null && email == null) {
+                return Result.Error(DataError.Remote.INVALID_CREDENTIALS)
+            }
+
+            if (username != null && email != null) {
+                return Result.Error(DataError.Remote.INVALID_CREDENTIALS)
+            }
+
+            val request = LoginRequest(
+                username = username,
+                email = email,
+                password = password,
+                deviceToken = deviceToken
+            )
+
+            println("Login request - Username: $username, Email: $email")
+
             val response: AuthResponse = client.post("$BASE_URL/user/login") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
+
             Result.Success(response)
         } catch (e: Exception) {
             e.printStackTrace()
+            println("Login error: ${e.message}")
             Result.Error(DataError.Remote.UNKNOWN)
         }
     }
+//    suspend fun login(
+//        username: String,
+//        email: String,
+//        password: String,
+//        deviceToken: String
+//    ): Result<AuthResponse, DataError.Remote> {
+//        return try {
+//            val request = LoginRequest(username, email, password, deviceToken)
+//            val response: AuthResponse = client.post("$BASE_URL/user/login") {
+//                contentType(ContentType.Application.Json)
+//                setBody(request)
+//            }.body()
+//            Result.Success(response)
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            Result.Error(DataError.Remote.UNKNOWN)
+//        }
+//    }
 
     suspend fun getUserByUsername(username: String): Result<User?, DataError.Remote> {
         return try {
@@ -305,7 +395,6 @@ class CodesApiService(
     ): Result<Unit, DataError.Remote> {
         return try {
             if (imageBytes != null && newPassword != null) {
-                // Update both image and password
                 client.submitFormWithBinaryData(
                     url = "$BASE_URL/user/update/$userId",
                     formData = formData {
@@ -317,7 +406,6 @@ class CodesApiService(
                     }
                 )
             } else if (newPassword != null) {
-                // Update only password - FIXED: Use parameters instead of formData
                 client.submitForm(
                     url = "$BASE_URL/user/update/$userId",
                     formParameters = parameters {
@@ -325,7 +413,6 @@ class CodesApiService(
                     }
                 )
             } else if (imageBytes != null) {
-                // Update only image
                 client.submitFormWithBinaryData(
                     url = "$BASE_URL/user/update/$userId",
                     formData = formData {
@@ -336,7 +423,6 @@ class CodesApiService(
                     }
                 )
             } else {
-                // Nothing to update
                 return Result.Success(Unit)
             }
             Result.Success(Unit)
@@ -350,7 +436,6 @@ class CodesApiService(
         newPassword: String
     ): Result<Unit, DataError.Remote> {
         return try {
-            // FIXED: Use parameters instead of formData for simple form submissions
             client.submitForm(
                 url = "$BASE_URL/user/update/$userId",
                 formParameters = parameters {

@@ -33,12 +33,21 @@ class AuthRepositoryImpl(private val apiService: CodesApiService) {
         return apiService.verifyOtp(email, otp)
     }
 
-    suspend fun login(
-        username: String,
-        email: String,
+    // In your AuthRepositoryImpl class
+   suspend fun login(
+        username: String?,
+        email: String?,
         password: String,
-        deviceToken: String = ""
+        deviceToken: String
     ): Result<AuthResponse, DataError.Remote> {
         return apiService.login(username, email, password, deviceToken)
     }
+//    suspend fun login(
+//        username: String,
+//        email: String,
+//        password: String,
+//        deviceToken: String = ""
+//    ): Result<AuthResponse, DataError.Remote> {
+//        return apiService.login(username, email, password, deviceToken)
+//    }
 }
