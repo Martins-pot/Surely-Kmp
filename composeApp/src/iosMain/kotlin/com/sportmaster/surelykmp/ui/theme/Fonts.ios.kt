@@ -12,3 +12,5 @@ actual val NunitoSemiBoldFamily: FontFamily
     get() = TODO("Not yet implemented")
 actual val NunitoBoldFamily: FontFamily
     get() = TODO("Not yet implemented")
+actual val MochiyPopPOne: FontFamily
+    get() = TODO("Not yet implemented")

@@ -80,7 +80,7 @@ val sharedModule = module {
     single { SendOtpByEmailUseCase(get()) }
 
     // ==================== ViewModels ====================
-    viewModel { CodesViewModel(get(), get()) }
+    viewModel { CodesViewModel(get(), get(), get()) }
     viewModel { PremiumCodesViewModel(get(), get(), get(), get()) }
     viewModel { AccountDetailsViewModel(get()) }
     viewModel { ChangePasswordViewModel(get()) }

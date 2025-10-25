@@ -43,6 +43,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.mertswork.footyreserve.ui.theme.AppRed
 import com.mertswork.footyreserve.ui.theme.BlackFaded
 import com.mertswork.footyreserve.ui.theme.DarkGrayBackground
 import com.sportmaster.surelykmp.activities.comment.presentation.screens.CommentScreen
@@ -211,7 +212,7 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                                         text = item.title.replaceFirstChar { it.uppercase() },
                                         fontSize = 10.sp,
                                         fontFamily = RushonGroundFamily,
-                                        color = if (index == selectedItemIndex) Color.Red else Color.White.copy(0.25f)
+                                        color = if (index == selectedItemIndex) AppRed else Color.White.copy(0.5f)
                                     )
                                 },
                                 alwaysShowLabel = true,

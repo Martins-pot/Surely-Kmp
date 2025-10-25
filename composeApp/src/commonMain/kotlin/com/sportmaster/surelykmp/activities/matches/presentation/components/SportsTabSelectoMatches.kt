@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sportmaster.surelykmp.activities.freecodes.domain.model.Sport
 import com.sportmaster.surelykmp.activities.matches.data.models.SportMatch
+import com.sportmaster.surelykmp.ui.theme.MochiyPopPOne
 import org.jetbrains.compose.resources.painterResource
 import surelykmp.composeapp.generated.resources.Res
 import surelykmp.composeapp.generated.resources.selected_basketball
@@ -123,7 +124,8 @@ fun SportTabSelectorMatches(
                             text = sport.displayName,
                             color = textColor,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 12.sp
+                            fontFamily = MochiyPopPOne,
+                            fontSize = 10.sp
                         )
                     }
                 }

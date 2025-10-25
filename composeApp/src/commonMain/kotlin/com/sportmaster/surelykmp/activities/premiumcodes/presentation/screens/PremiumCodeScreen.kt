@@ -28,12 +28,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.mertswork.footyreserve.ui.theme.AppRed
 import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
 import kotlinx.coroutines.delay
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.CodeItem
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.ShimmerCodeItem
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.SportTabSelector
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.PremiumCodesViewModel
+import com.sportmaster.surelykmp.activities.profile.presentation.screens.YellowMain
 import com.sportmaster.surelykmp.ui.theme.RushonGroundFamily
 import com.sportmaster.surelykmp.utils.rememberShareManager
 import kotlinx.coroutines.launch
@@ -121,20 +123,19 @@ fun CodesScreenPremium(
                 Text(
                     text = "EXPERT CODES",
                     color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp,
                     fontFamily = RushonGroundFamily,
                     modifier = Modifier.weight(1f)
                 )
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(30.dp)
                 ) {
                     // Country Filter Button
                     IconButton(
                         onClick = { showCountryDialog = true },
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(30.dp)
                             .background(
                                 color = Color.White.copy(alpha = 0.1f),
                                 shape = CircleShape
@@ -147,14 +148,14 @@ fun CodesScreenPremium(
                     IconButton(
                         onClick = { showFilterDialog = true },
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(30.dp)
                             .background(
                                 color = Color.White.copy(alpha = 0.1f),
                                 shape = CircleShape
                             )
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Settings,
+                            imageVector = Icons.Default.FilterList,
                             contentDescription = "Filter",
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)
@@ -450,7 +451,6 @@ private fun CountrySelectionContent(
                     text = "Select Country",
                     color = Color.White,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
                     fontFamily = RushonGroundFamily,
                     modifier = Modifier.weight(1f)
                 )
@@ -467,15 +467,15 @@ private fun CountrySelectionContent(
                 }
             }
 
-            // Subtitle
-            Text(
-                text = "Choose your country to personalize your experience.",
-                color = Color.White,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+//            // Subtitle
+//            Text(
+//                text = "Choose your country to personalize your experience.",
+//                color = Color.White,
+//                fontSize = 12.sp,
+//                modifier = Modifier.padding(top = 8.dp)
+//            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Country List
             LazyColumn(
@@ -543,29 +543,28 @@ private fun CountrySelectionContent(
             }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Select Button - Increased to 55dp
             Button(
-                onClick = {
+                onClick ={
                     onCountrySelected(tempSelectedCountry)
                     onDismiss()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(55.dp) // Increased to 55dp
-                    .padding(top = 8.dp),
+                    .height(55.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE53935)
+                    containerColor = AppRed.copy(.1f)
                 ),
-                shape = RoundedCornerShape(10.dp)
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppRed)
             ) {
                 Text(
                     text = "Select Country",
-                    color = Color.White,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
                     fontFamily = RushonGroundFamily
                 )
             }
+
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -619,7 +618,6 @@ private fun FilterSelectionContent(
                     text = "Filter Your Picks",
                     color = Color.White,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
                     fontFamily = RushonGroundFamily,
                     modifier = Modifier.weight(1f)
                 )
@@ -636,15 +634,15 @@ private fun FilterSelectionContent(
                 }
             }
 
-            // Subtitle
-            Text(
-                text = "From sure wins to high-stakes odds – find predictions for you.",
-                color = Color.White,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+//            // Subtitle
+//            Text(
+//                text = "From sure wins to high-stakes odds – find predictions for you.",
+//                color = Color.White,
+//                fontSize = 12.sp,
+//                modifier = Modifier.padding(top = 8.dp)
+//            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Filter List
             LazyColumn(
@@ -687,33 +685,31 @@ private fun FilterSelectionContent(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Select Button - Increased to 55dp
             Button(
-                onClick = {
+                onClick ={
                     onFilterSelected(tempSelectedFilter)
                     onDismiss()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(55.dp) // Increased to 55dp
-                    .padding(top = 8.dp),
+                    .height(55.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE53935)
+                    containerColor = AppRed.copy(.1f)
                 ),
-                shape = RoundedCornerShape(10.dp)
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppRed)
             ) {
                 Text(
                     text = "Filter Results",
-                    color = Color.White,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
                     fontFamily = RushonGroundFamily
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(25.dp))
         }
     }
 }

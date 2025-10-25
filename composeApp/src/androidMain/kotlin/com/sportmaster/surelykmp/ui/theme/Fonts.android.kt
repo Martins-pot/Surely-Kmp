@@ -22,3 +22,6 @@ actual val NunitoSemiBoldFamily= FontFamily(
 actual val NunitoBoldFamily= FontFamily(
     Font(resId = R.font.nunito_bold, weight = FontWeight.Medium)
 )
+actual val MochiyPopPOne= FontFamily(
+    Font(resId = R.font.mochiy_pop_p_one_regular, weight = FontWeight.Medium)
+)

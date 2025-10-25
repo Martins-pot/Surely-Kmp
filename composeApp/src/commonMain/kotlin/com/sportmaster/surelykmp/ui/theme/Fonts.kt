@@ -12,3 +12,4 @@ expect val NunitoBlackFamily: FontFamily
 expect val NunitoMediumFamily: FontFamily
 expect val NunitoSemiBoldFamily: FontFamily
 expect val NunitoBoldFamily: FontFamily
+expect val MochiyPopPOne: FontFamily
