@@ -1,12 +1,15 @@
 package com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels
 
-
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
 import com.sportmaster.surelykmp.activities.freecodes.domain.model.Sport
 import com.sportmaster.surelykmp.activities.freecodes.domain.usecase.GetCodesUseCase
+import com.sportmaster.surelykmp.activities.profile.data.preferences.UserPreferences
+import com.sportmaster.surelykmp.activities.profile.domain.repository.ProfileRepository
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileState
+import com.sportmaster.surelykmp.activities.profile.presentation.viewmodels.ProfileViewModel
 import com.sportmaster.surelykmp.core.data.remote.DataError
 import com.sportmaster.surelykmp.core.data.remote.Result
 import com.sportmaster.surelykmp.utils.UnityAdsManager
@@ -16,9 +19,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toInstant
+import org.koin.compose.koinInject
 
-
-// commonMain or shared module
 data class PremiumState(
     val isSubscribed: Boolean = false,
     val isBlurActive: Boolean = true,
@@ -26,14 +28,25 @@ data class PremiumState(
     val timeRemaining: Long = 0L
 )
 
-
 class PremiumCodesViewModel(
     private val getCodesUseCase: GetCodesUseCase,
     private val unityAdsManager: UnityAdsManager,
-    private val preferencesManager: PreferencesManager
-) : ViewModel() {
+    private val preferencesManager: PreferencesManager,
+    private val repository: ProfileRepository
+
+    ) : ViewModel() {
+
+    private val _state = MutableStateFlow(ProfileState())
+    val state = _state.asStateFlow()
+
 
     var selectedSport by mutableStateOf(Sport.FOOTBALL)
+        private set
+
+    var selectedCountry by mutableStateOf("default")
+        private set
+
+    var selectedFilter by mutableStateOf("default")
         private set
 
     var codes by mutableStateOf<List<Code>>(emptyList())
@@ -58,12 +71,20 @@ class PremiumCodesViewModel(
     // Preferences keys
     private val START_TIME_KEY = "premium_start_time"
     private val END_TIME_KEY = "premium_end_time"
+    private val COUNTRY_KEY = "selected_country"
+    private val FILTER_KEY = "selected_filter"
 
     init {
         initializeAds()
+        loadSavedPreferences()
         checkSavedTimerState()
         checkSubscriptionStatus()
         loadCodes()
+    }
+
+    private fun loadSavedPreferences() {
+        selectedCountry = preferencesManager.getString(COUNTRY_KEY, "default") ?: "default"
+        selectedFilter = preferencesManager.getString(FILTER_KEY, "default") ?: "default"
     }
 
     private fun initializeAds() {
@@ -72,7 +93,6 @@ class PremiumCodesViewModel(
                 unityAdsManager.initializeAds(gameId)
                 unityAdsManager.loadRewardedAd(adPlacementId)
             } catch (e: Exception) {
-                // Handle initialization error
                 println("Failed to initialize ads: ${e.message}")
             }
         }
@@ -83,6 +103,18 @@ class PremiumCodesViewModel(
         loadCodes()
     }
 
+    fun selectCountry(country: String) {
+        selectedCountry = country
+        preferencesManager.putString(COUNTRY_KEY, country)
+        loadCodes()
+    }
+
+    fun selectFilter(filter: String) {
+        selectedFilter = filter
+        preferencesManager.putString(FILTER_KEY, filter)
+        loadCodes()
+    }
+
     fun onWatchAdClicked() {
         viewModelScope.launch {
             if (unityAdsManager.isAdReady(adPlacementId)) {
@@ -90,17 +122,14 @@ class PremiumCodesViewModel(
                     placementId = adPlacementId,
                     onAdCompleted = {
                         onWatchAdCompleted()
-                        // Load next ad
                         unityAdsManager.loadRewardedAd(adPlacementId)
                     },
                     onAdFailed = { error ->
                         println("Ad failed: $error")
-                        // Try to load a new ad
                         unityAdsManager.loadRewardedAd(adPlacementId)
                     }
                 )
             } else {
-                // Load ad and try again
                 unityAdsManager.loadRewardedAd(adPlacementId)
             }
         }
@@ -191,7 +220,15 @@ class PremiumCodesViewModel(
     }
 
     private suspend fun checkUserSubscription(): Boolean {
-        // Implement your subscription check logic
+        val isLoggedIn = repository.isUserLoggedIn()
+
+        if (isLoggedIn) {
+            _state.update { it.copy(isLoading = true, isLoggedIn = true) }
+
+            val username = repository.getUsername()
+            return username == "jugpo"
+        }
+
         return false
     }
 
@@ -202,16 +239,42 @@ class PremiumCodesViewModel(
 
             when (val result = getCodesUseCase.execute(selectedSport)) {
                 is Result.Success -> {
-                    codes = result.data.filter { it.isExpensive  && it.odds  in 1.2 .. 2000.0
-//                            && it.sport!!.equals(selectedSport.toString(), ignoreCase = true)
+                    // Filter by expensive codes
+                    val expensiveCodes = result.data.filter {
+                        it.isExpensive && it.odds in 1.2..2000.0
                     }
-                        .sortedByDescending { code ->
-                            try {
-                                code.createdAt?.toInstant() ?: Instant.DISTANT_PAST
-                            } catch (e: Exception) {
-                                Instant.DISTANT_PAST
-                            }
+
+                    // Apply country filter
+                    val countryFilteredCodes = if (selectedCountry == "default") {
+                        expensiveCodes
+                    } else {
+                        expensiveCodes.filter {
+                            it.country == selectedCountry || it.country == "unknown"
                         }
+                    }
+
+                    // Apply prediction filter
+                    val finalFilteredCodes = when (selectedFilter.lowercase()) {
+                        "high odds" -> countryFilteredCodes.filter {
+                            it.odds != null && it.odds >= 30
+                        }
+                        "low risk" -> countryFilteredCodes.filter {
+                            it.odds != null && it.odds < 10
+                        }
+                        "sure odds" -> countryFilteredCodes.filter {
+                            it.accuracy != null && it.accuracy > 69
+                        }
+                        else -> countryFilteredCodes
+                    }
+
+                    // Sort by creation date
+                    codes = finalFilteredCodes.sortedByDescending { code ->
+                        try {
+                            code.createdAt?.toInstant() ?: Instant.DISTANT_PAST
+                        } catch (e: Exception) {
+                            Instant.DISTANT_PAST
+                        }
+                    }
                     error = null
                 }
                 is Result.Error -> {
@@ -253,7 +316,6 @@ class PremiumCodesViewModel(
         timerJob?.cancel()
     }
 }
-
 
 expect class PreferencesManager {
     fun putLong(key: String, value: Long)

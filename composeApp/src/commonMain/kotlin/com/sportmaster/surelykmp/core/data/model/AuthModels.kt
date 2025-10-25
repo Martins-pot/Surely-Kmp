@@ -30,8 +30,8 @@ data class OtpVerificationRequest(
 data class OtpSendRequest(
     val email: String,
     val username: String,
-    val subject: String,
-    val template_name: String,
+    val subject: String? = null,  // Make nullable with default null
+    val template_name: String? = null,  // Make nullable with default null
     val tag: String
 )
 

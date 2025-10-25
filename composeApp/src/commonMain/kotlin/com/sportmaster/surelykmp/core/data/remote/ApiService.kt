@@ -53,6 +53,54 @@ class CodesApiService(
         }
     }
 
+    @Serializable
+    data class EmailExistsResponse(
+        val message: Boolean
+    )
+
+    suspend fun checkEmailExists(email: String): Result<Boolean, DataError.Remote> {
+        return try {
+            val response: EmailExistsResponse = client.post("$BASE_URL/user/exists") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("email" to email))
+            }.body()
+
+            Result.Success(response.message)
+        } catch (e: ClientRequestException) {
+            if (e.response.status == HttpStatusCode.NotFound) {
+                Result.Success(false)
+            } else {
+                e.printStackTrace()
+                println("checkEmailExists error: ${e.message}")
+                Result.Error(DataError.Remote.UNKNOWN)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("checkEmailExists error: ${e.message}")
+            Result.Error(DataError.Remote.UNKNOWN)
+        }
+    }
+
+    suspend fun sendOtpByEmail(email: String): Result<Unit, DataError.Remote> {
+        return try {
+            val request = OtpSendRequest(
+                email = email,
+                username = "", // Empty string - backend should handle this for forgot password flow
+                subject = null, // Optional - let backend use default
+                template_name = null, // Optional - let backend use default
+                tag = "forgot_password" // Correct tag for forgot password flow
+            )
+            client.post("$BASE_URL/otp/send") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("sendOtpByEmail error: ${e.message}")
+            Result.Error(DataError.Remote.UNKNOWN)
+        }
+    }
     suspend fun addComment(
         codeId: String,
         commentText: String

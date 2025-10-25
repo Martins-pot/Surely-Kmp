@@ -32,6 +32,10 @@ class AuthRepository(private val apiService: CodesApiService) {
         return apiService.verifyOtp(email, otp)
     }
 
+    suspend fun sendOtpByEmail(email: String): Result<Unit, DataError.Remote> {
+        return apiService.sendOtpByEmail(email)
+    }
+
     suspend fun login(
         username: String,
         email: String,

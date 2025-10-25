@@ -240,3 +240,15 @@ class CheckUsernameAvailabilityUseCase(private val authRepository: AuthRepositor
         return authRepository.checkUsernameAvailability(username)
     }
 }
+
+class CheckEmailExistsUseCase(private val authRepository: AuthRepositoryImpl) {
+    suspend operator fun invoke(email: String): Result<Boolean, DataError.Remote> {
+        return authRepository.checkEmailExists(email)
+    }
+}
+
+class SendOtpByEmailUseCase(private val authRepository: AuthRepositoryImpl) {
+    suspend operator fun invoke(email: String): Result<Unit, DataError.Remote> {
+        return authRepository.sendOtpByEmail(email)
+    }
+}

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
@@ -18,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -83,6 +86,7 @@ import surelykmp.composeapp.generated.resources.unselected_matches
 import surelykmp.composeapp.generated.resources.unselected_premium_codes
 import surelykmp.composeapp.generated.resources.unselected_profile
 import com.sportmaster.surelykmp.core.data.remote.Result
+import com.sportmaster.surelykmp.ui.theme.RushonGroundFamily
 
 data class BottomNavigationItem(
     val title: String,
@@ -100,30 +104,40 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
     val navController = rememberNavController()
     val items = listOf(
         BottomNavigationItem(
-            title = "free",
+            title = "Codes",
             selectedIcon = painterResource(Res.drawable.selected_free_codes),
             unselectedIcon = painterResource(Res.drawable.unselected_free_codes),
             hasNews = false,
         ),
         BottomNavigationItem(
-            title = "premium",
+            title = "Expert",
             selectedIcon = painterResource(Res.drawable.selected_premium_codes),
             unselectedIcon = painterResource(Res.drawable.unselected_premium_codes),
             hasNews = false
         ),
         BottomNavigationItem(
-            title = "matches",
+            title = "Ai-matches",
             selectedIcon = painterResource(Res.drawable.selected_matches),
             unselectedIcon = painterResource(Res.drawable.unselected_matches),
             hasNews = false,
         ),
         BottomNavigationItem(
-            title = "account",
+            title = "Profile",
             selectedIcon = painterResource(Res.drawable.selected_account),
             unselectedIcon = painterResource(Res.drawable.unselected_account),
             hasNews = false,
         )
     )
+
+    fun getRouteForTitle(title: String): String {
+        return when (title) {
+            "Codes" -> Screen.FreeCodes.route      // "free"
+            "Expert" -> Screen.PremiumCodes.route  // "premium" - NOT "expert"
+            "Ai-matches" -> Screen.Matches.route   // "matches"
+            "Profile" -> Screen.Account.route      // "account"
+            else -> Screen.FreeCodes.route
+        }
+    }
     var selectedItemIndex by rememberSaveable {
         mutableStateOf(0)
     }
@@ -158,12 +172,12 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(90.dp)
+                        .height(110.dp)
                         .background(
                             color = Color.Black,
                             shape = RoundedCornerShape(
-                                topStart = 12.dp,
-                                topEnd = 12.dp
+                                topStart = 8.dp,
+                                topEnd = 8.dp
                             )
                         ),
                     contentAlignment = Alignment.Center
@@ -173,17 +187,18 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                         tonalElevation = 0.dp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(70.dp)
+                            .height(110.dp)
                     ) {
                         items.forEachIndexed { index, item ->
-                            val isSelected =
-                                navController.currentDestination?.route == item.title.lowercase()
+                            val route = getRouteForTitle(item.title) // Get the correct route
+                            val isSelected = navController.currentDestination?.route == route
 
                             NavigationBarItem(
-                                selected = isSelected,
+                                selected = index == selectedItemIndex,
                                 onClick = {
                                     selectedItemIndex = index
-                                    navController.navigate(item.title.lowercase()) {
+                                    // FIX: Use the mapped route instead of item.title.lowercase()
+                                    navController.navigate(route) {
                                         launchSingleTop = true
                                         restoreState = true
                                         popUpTo(navController.graph.startDestinationId) {
@@ -191,14 +206,33 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                                         }
                                     }
                                 },
-                                label = { Text(text = item.title) },
-                                alwaysShowLabel = false,
+                                label = {
+                                    Text(
+                                        text = item.title.replaceFirstChar { it.uppercase() },
+                                        fontSize = 10.sp,
+                                        fontFamily = RushonGroundFamily,
+                                        color = if (index == selectedItemIndex) Color.Red else Color.White.copy(0.25f)
+                                    )
+                                },
+                                alwaysShowLabel = true,
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedTextColor = Color(0xFF9E2024).copy(.6f),
+                                    unselectedTextColor = Color(0xFF7F7F7F).copy(.6f),
+                                    selectedIconColor = Color.Transparent,
+                                    unselectedIconColor = Color.Transparent,
+                                    indicatorColor = Color.Transparent
+                                ),
                                 icon = {
                                     BadgedBox(
                                         badge = {
                                             when {
                                                 item.badgeCount != null -> {
-                                                    Badge { Text(text = item.badgeCount.toString()) }
+                                                    Badge {
+                                                        Text(
+                                                            text = item.badgeCount.toString(),
+                                                            fontSize = 10.sp
+                                                        )
+                                                    }
                                                 }
                                                 item.hasNews -> {
                                                     Badge()
@@ -211,8 +245,7 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                                                 item.selectedIcon
                                             } else item.unselectedIcon,
                                             contentDescription = item.title,
-                                            modifier = Modifier
-                                                .sizeIn(24.dp, 24.dp, 30.dp, 30.dp)
+                                            modifier = Modifier.size(20.dp)
                                         )
                                     }
                                 }
@@ -221,7 +254,7 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
                     }
                 }
             }
-        ) { paddingValues ->
+        ){ paddingValues ->
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
@@ -234,8 +267,17 @@ fun MainScreen(startDestination: String = Screen.FreeCodes.route) {
 
 
                 composable(Screen.AccountDetails.route) { AccountDetailsScreenContainer(navController) }
+                composable(
+                        route = "${Screen.ChangePassword.route}/{email}",
+                arguments = listOf(navArgument("email") { type = NavType.StringType })
+                ) { backStackEntry ->
+                val email = backStackEntry.arguments?.getString("email")
+                ChangePasswordScreenContainer(navController, email)
+            }
+
+// Keep the original route for logged-in users without email
                 composable(Screen.ChangePassword.route) {
-                    ChangePasswordScreenContainer(navController)
+                    ChangePasswordScreenContainer(navController, null)
                 }
 
                 composable(Screen.Register.route) {
@@ -407,12 +449,19 @@ fun AccountDetailsScreenContainer(navController: NavController) {
 }
 
 @Composable
-fun ChangePasswordScreenContainer(navController: NavController) {
+fun ChangePasswordScreenContainer(
+    navController: NavController,
+    email: String? = null
+) {
     val viewModel: ChangePasswordViewModel = koinInject()
 
-    // Load user data when screen appears
+    // Pass email to viewModel if it exists (forgot password flow)
     LaunchedEffect(navController.currentBackStackEntry) {
-        viewModel.onAction(ChangePasswordAction.LoadUserData)
+        if (email != null) {
+            viewModel.onAction(ChangePasswordAction.LoadUserDataWithEmail(email))
+        } else {
+            viewModel.onAction(ChangePasswordAction.LoadUserData)
+        }
     }
 
     ChangePasswordScreen(

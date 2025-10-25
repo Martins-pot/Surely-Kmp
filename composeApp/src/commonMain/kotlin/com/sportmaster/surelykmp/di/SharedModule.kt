@@ -28,7 +28,9 @@ import com.sportmaster.surelykmp.core.domain.usecase.LoginUserUseCase
 import com.sportmaster.surelykmp.core.domain.usecase.VerifyOtpUseCase
 import com.sportmaster.surelykmp.core.domain.usecase.SendOtpUseCase
 import com.sportmaster.surelykmp.core.domain.usecase.CheckEmailAvailabilityUseCase
+import com.sportmaster.surelykmp.core.domain.usecase.CheckEmailExistsUseCase
 import com.sportmaster.surelykmp.core.domain.usecase.CheckUsernameAvailabilityUseCase
+import com.sportmaster.surelykmp.core.domain.usecase.SendOtpByEmailUseCase
 import com.sportmaster.surelykmp.core.presentation.viewmodel.VersionCheckViewModel
 import com.sportmaster.surelykmp.utils.AppVersionProvider
 import com.sportmaster.surelykmp.utils.PlatformUtils
@@ -74,13 +76,15 @@ val sharedModule = module {
     single { SendOtpUseCase(get()) }
     single { CheckEmailAvailabilityUseCase(get()) }
     single { CheckUsernameAvailabilityUseCase(get()) }
+    single { CheckEmailExistsUseCase(get()) }
+    single { SendOtpByEmailUseCase(get()) }
 
     // ==================== ViewModels ====================
     viewModel { CodesViewModel(get(), get()) }
-    viewModel { PremiumCodesViewModel(get(), get(), get()) }
+    viewModel { PremiumCodesViewModel(get(), get(), get(), get()) }
     viewModel { AccountDetailsViewModel(get()) }
     viewModel { ChangePasswordViewModel(get()) }
-    viewModel { ForgotPasswordViewModel(get(), get(), get()) }
+    viewModel { ForgotPasswordViewModel(get(), get(), get(), get(), get()) }
 
     viewModel {
         MatchesViewModel(

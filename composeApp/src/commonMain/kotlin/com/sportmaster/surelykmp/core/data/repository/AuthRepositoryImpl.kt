@@ -1,4 +1,3 @@
-// commonMain/kotlin/com/sportmaster/surelykmp/core/data/repository/AuthRepositoryImpl.kt
 package com.sportmaster.surelykmp.core.data.repository
 
 import com.sportmaster.surelykmp.core.data.remote.CodesApiService
@@ -42,12 +41,12 @@ class AuthRepositoryImpl(private val apiService: CodesApiService) {
     ): Result<AuthResponse, DataError.Remote> {
         return apiService.login(username, email, password, deviceToken)
     }
-//    suspend fun login(
-//        username: String,
-//        email: String,
-//        password: String,
-//        deviceToken: String = ""
-//    ): Result<AuthResponse, DataError.Remote> {
-//        return apiService.login(username, email, password, deviceToken)
-//    }
+
+    suspend fun sendOtpByEmail(email: String): Result<Unit, DataError.Remote> {
+        return apiService.sendOtpByEmail(email)
+    }
+
+    suspend fun checkEmailExists(email: String): Result<Boolean, DataError.Remote> {
+        return apiService.checkEmailExists(email)
+    }
 }

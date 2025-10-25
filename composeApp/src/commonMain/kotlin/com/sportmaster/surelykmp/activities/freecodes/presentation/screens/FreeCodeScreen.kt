@@ -19,8 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.CodeItem
+import com.sportmaster.surelykmp.activities.freecodes.presentation.components.ShimmerCodeItem
 import com.sportmaster.surelykmp.activities.freecodes.presentation.components.SportTabSelector
 import com.sportmaster.surelykmp.activities.freecodes.presentation.viewmodels.CodesViewModel
+import com.sportmaster.surelykmp.ui.theme.RushonGroundFamily
+import com.sportmaster.surelykmp.utils.rememberShareManager
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,9 +32,18 @@ fun CodesScreen(
     viewModel: CodesViewModel,
     onCodeClick: (Code) -> Unit = {},
 ) {
+    val shareManager = rememberShareManager()
     // Pull-to-refresh state
     var isRefreshing by remember { mutableStateOf(false) }
 
+    var clickEnabled by remember { mutableStateOf(true) }
+
+    LaunchedEffect(clickEnabled) {
+        if (!clickEnabled) {
+            delay(4000L)
+            clickEnabled = true
+        }
+    }
     // Handle refresh completion
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
@@ -64,7 +76,8 @@ fun CodesScreen(
                     text = "CODES",
                     color = Color.White,
                     fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = RushonGroundFamily
                 )
             }
 
@@ -87,11 +100,15 @@ fun CodesScreen(
                 // Content
                 when {
                     viewModel.isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(0.dp),
                         ) {
-                            CircularProgressIndicator(color = Color(0xFFE53935))
+                            items(5) {
+                                ShimmerCodeItem()
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(60.dp))
+                            }
                         }
                     }
                     viewModel.error != null -> {
@@ -138,14 +155,22 @@ fun CodesScreen(
                             items(viewModel.codes.filter { !it.isExpensive }) { code ->
                                 CodeItem(
                                     code = code,
-                                    onShare = {},
-                                    onItemClick = { onCodeClick(code) }
+                                    onShare = {
+                                            text ->
+                                        shareManager.shareText(text, "Share Code")
+                                    },
+                                    onItemClick = {
+                                        if (clickEnabled) {
+                                            clickEnabled = false
+                                            onCodeClick(code)
+                                        }
+                                         }
                                 )
                             }
 
                             // Add some bottom padding to ensure content doesn't get cut off by banner
                             item {
-                                Spacer(modifier = Modifier.height(60.dp))
+                                Spacer(modifier = Modifier.height(0.dp))
                             }
                         }
                     }
@@ -154,12 +179,12 @@ fun CodesScreen(
         }
 
         // Banner Ad at the bottom
-        UnityBannerAd(
-            placementId = "Banner_Android",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-        )
+//        UnityBannerAd(
+//            placementId = "Banner_Android",
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(60.dp)
+//        )
     }
 }
 

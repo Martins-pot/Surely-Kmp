@@ -61,6 +61,11 @@ class ProfileRepositoryImpl(
 
 
     }
+
+    suspend fun checkEmailExists(email: String): Result<Boolean, DataError.Remote> {
+        return apiService.checkEmailExists(email)
+    }
+    
     override suspend fun getUserByEmail(email: String): Result<User, DataError.Remote> {
         return apiService.getUserByEmail(email)
     }

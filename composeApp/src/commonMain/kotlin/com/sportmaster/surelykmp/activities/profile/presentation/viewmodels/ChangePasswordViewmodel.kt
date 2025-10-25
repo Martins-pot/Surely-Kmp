@@ -30,6 +30,7 @@ data class ChangePasswordState(
 
 sealed interface ChangePasswordAction {
     object LoadUserData : ChangePasswordAction
+    data class LoadUserDataWithEmail(val email: String) : ChangePasswordAction  // Add this
     data class NewPasswordChanged(val password: String) : ChangePasswordAction
     data class RepeatPasswordChanged(val password: String) : ChangePasswordAction
     object ToggleNewPasswordVisibility : ChangePasswordAction
@@ -55,6 +56,9 @@ class ChangePasswordViewModel(
     private val eventChannel = Channel<ChangePasswordEvent>()
     val events = eventChannel.receiveAsFlow()
 
+    // Store email for forgot password flow
+    private var resetEmail: String? = null
+
     init {
         loadUserData()
     }
@@ -62,12 +66,53 @@ class ChangePasswordViewModel(
     fun onAction(action: ChangePasswordAction) {
         when (action) {
             ChangePasswordAction.LoadUserData -> loadUserData()
+            is ChangePasswordAction.LoadUserDataWithEmail -> loadUserDataWithEmail(action.email) // Add this
             is ChangePasswordAction.NewPasswordChanged -> updateNewPassword(action.password)
             is ChangePasswordAction.RepeatPasswordChanged -> updateRepeatPassword(action.password)
             ChangePasswordAction.ToggleNewPasswordVisibility -> toggleNewPasswordVisibility()
             ChangePasswordAction.ToggleRepeatPasswordVisibility -> toggleRepeatPasswordVisibility()
             ChangePasswordAction.PickImage -> pickImage()
             ChangePasswordAction.ConfirmChanges -> confirmChanges()
+        }
+    }
+
+    private fun loadUserDataWithEmail(email: String) {
+        resetEmail = email
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+
+            try {
+                // Get user details by email for forgot password flow
+                when (val result = repository.getUserByEmail(email)) {
+                    is com.sportmaster.surelykmp.core.data.remote.Result.Success -> {
+                        val user = result.data
+                        _state.update {
+                            it.copy(
+                                username = user.userName,
+                                avatarUrl = user.avatar,
+                                userId = user.userId,
+                                isLoading = false
+                            )
+                        }
+                    }
+                    is com.sportmaster.surelykmp.core.data.remote.Result.Error -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                username = "Reset Password",
+                                avatarUrl = null
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Failed to load user data"
+                    )
+                }
+            }
         }
     }
 
@@ -91,7 +136,6 @@ class ChangePasswordViewModel(
                         )
                     }
                 } else {
-                    // For non-logged-in users (forgot password flow)
                     _state.update {
                         it.copy(
                             isLoading = false,
@@ -99,7 +143,6 @@ class ChangePasswordViewModel(
                             avatarUrl = null
                         )
                     }
-                    // Don't navigate back - allow them to proceed with password reset
                 }
             } catch (e: Exception) {
                 _state.update {
@@ -111,7 +154,6 @@ class ChangePasswordViewModel(
             }
         }
     }
-
     private fun updateNewPassword(password: String) {
         _state.update { it.copy(newPassword = password) }
         validateNewPassword(password)

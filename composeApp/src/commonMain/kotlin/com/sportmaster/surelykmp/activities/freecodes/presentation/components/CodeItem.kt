@@ -10,8 +10,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,13 +34,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sportmaster.surelykmp.activities.freecodes.data.model.Code
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import surelykmp.composeapp.generated.resources.Icon_comment
 import surelykmp.composeapp.generated.resources.Res
 import surelykmp.composeapp.generated.resources._xbet
 import surelykmp.composeapp.generated.resources.bet9ja
@@ -48,14 +47,18 @@ import surelykmp.composeapp.generated.resources.betfigo
 import surelykmp.composeapp.generated.resources.betking_me
 import surelykmp.composeapp.generated.resources.betway
 import surelykmp.composeapp.generated.resources.cameroon
+import surelykmp.composeapp.generated.resources.comment_icon
+import surelykmp.composeapp.generated.resources.copy_icon
 import surelykmp.composeapp.generated.resources.ghana
 import surelykmp.composeapp.generated.resources.kenya
 import surelykmp.composeapp.generated.resources.livescorebet
 import surelykmp.composeapp.generated.resources.megapari
 import surelykmp.composeapp.generated.resources.ng234bet
 import surelykmp.composeapp.generated.resources.nigeria
+import surelykmp.composeapp.generated.resources.share_icon
 import surelykmp.composeapp.generated.resources.south_africa
 import surelykmp.composeapp.generated.resources.sportytext
+import surelykmp.composeapp.generated.resources.star_icon
 import surelykmp.composeapp.generated.resources.tanzania
 import surelykmp.composeapp.generated.resources.uganda
 import surelykmp.composeapp.generated.resources.world
@@ -73,106 +76,81 @@ fun CodeItem(
     var snackbarMessage by remember { mutableStateOf("") }
 
     // Animation states for copy and share buttons
-    var copyScale by remember { mutableStateOf(1f) }
-    var shareScale by remember { mutableStateOf(1f) }
+    var copyAnimating by remember { mutableStateOf(false) }
+    var shareAnimating by remember { mutableStateOf(false) }
 
-    val copyAnimation = animateFloatAsState(
-        targetValue = copyScale,
+    val copyScale by animateFloatAsState(
+        targetValue = if (copyAnimating) 0.7f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
     )
 
-    val shareAnimation = animateFloatAsState(
-        targetValue = shareScale,
+    val shareScale by animateFloatAsState(
+        targetValue = if (shareAnimating) 0.7f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
     )
+
+    // Function to handle copy with animation
+    fun handleCopy(text: String) {
+        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(text))
+        snackbarMessage = "Code copied"
+        showSnackbar = true
+
+        // Trigger animation
+        copyAnimating = true
+    }
+
+    // Function to handle share with animation
+    fun handleShare(text: String) {
+        onShare(text)
+
+        // Trigger animation
+        shareAnimating = true
+    }
+
+    // Reset copy animation after it completes
+    LaunchedEffect(copyAnimating) {
+        if (copyAnimating) {
+            delay(300) // Shorter animation duration
+            copyAnimating = false
+        }
+    }
+
+    // Reset share animation after it completes
+    LaunchedEffect(shareAnimating) {
+        if (shareAnimating) {
+            delay(300) // Shorter animation duration
+            shareAnimating = false
+        }
+    }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.Transparent)
-            .clickable { onItemClick(code) }
+            .clickable(
+                indication = null, // This removes the ripple effect
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            ) { onItemClick(code) }
     ) {
         if (code.platform == "foresport") {
             PredictionTypeLayout(
                 code = code,
-                onCopy = { text ->
-                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(text))
-                    snackbarMessage = "$text copied"
-                    showSnackbar = true
-
-                    // Trigger animation
-                    copyScale = 0.7f
-                    kotlinx.coroutines.GlobalScope.launch {
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 0.7f
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 1f
-                    }
-                },
-                onShare = { text ->
-                    onShare(text)
-
-                    // Trigger animation
-                    shareScale = 0.7f
-                    kotlinx.coroutines.GlobalScope.launch {
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 0.7f
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 1f
-                    }
-                },
-                copyScale = copyAnimation.value,
-                shareScale = shareAnimation.value
+                onCopy = { text -> handleCopy(text) },
+                onShare = { text -> handleShare(text) },
+                copyScale = copyScale,
+                shareScale = shareScale
             )
         } else {
             CodeTypeLayout(
                 code = code,
-                onCopy = { text ->
-                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(text))
-                    snackbarMessage = "$text copied"
-                    showSnackbar = true
-
-                    // Trigger animation
-                    copyScale = 0.7f
-                    kotlinx.coroutines.GlobalScope.launch {
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 0.7f
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        copyScale = 1f
-                    }
-                },
-                onShare = { text ->
-                    onShare(text)
-
-                    // Trigger animation
-                    shareScale = 0.7f
-                    kotlinx.coroutines.GlobalScope.launch {
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 0.7f
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 1.2f
-                        kotlinx.coroutines.delay(100)
-                        shareScale = 1f
-                    }
-                },
-                copyScale = copyAnimation.value,
-                shareScale = shareAnimation.value
+                onCopy = { text -> handleCopy(text) },
+                onShare = { text -> handleShare(text) },
+                copyScale = copyScale,
+                shareScale = shareScale
             )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Bottom divider
         Box(
@@ -180,14 +158,14 @@ fun CodeItem(
                 .fillMaxWidth()
                 .height(1.2.dp)
                 .alpha(0.5f)
-                .background(Color(0xFF6B6B6B)) // calender_bar color
+                .background(Color(0xFF6B6B6B))
         )
     }
 
     // Show snackbar
     if (showSnackbar) {
         LaunchedEffect(showSnackbar) {
-            kotlinx.coroutines.delay(2000)
+            delay(2000)
             showSnackbar = false
         }
     }
@@ -209,7 +187,7 @@ private fun CodeTypeLayout(
         if (code.accuracy != null && code.isExpensive) {
             AccuracySection(
                 accuracy = code.accuracy,
-                modifier = Modifier.padding( vertical = 10.dp)
+                modifier = Modifier.padding(vertical = 10.dp)
             )
         } else {
             Spacer(modifier = Modifier.height(10.dp))
@@ -218,7 +196,7 @@ private fun CodeTypeLayout(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding( vertical = 10.dp),
+                .padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
@@ -258,29 +236,18 @@ private fun CodeTypeLayout(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Copy button
-                    Image(
-
-                        imageVector = CopyIcon(), // You'll need to implement these icons
-                        contentDescription = "Copy",
-                        modifier = Modifier
-                            .scale(copyScale)
-                            .clickable { onCopy(code.text) },
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
-
-
+                    CopyIcon(
+                        onCopy = { onCopy(code.text) },
+                        scale = copyScale
                     )
 
                     Spacer(modifier = Modifier.width(10.dp))
 
                     // Share button
-//                    Image(
-//                        imageVector = ShareIcon(),
-//                        contentDescription = "Share",
-//                        modifier = Modifier
-//                            .scale(shareScale)
-//                            .clickable { onShare(code.text) },
-//                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
-//                    )
+                    ShareIcon(
+                        onShare = { onShare(code.text) },
+                        scale = shareScale
+                    )
 
                     Spacer(modifier = Modifier.width(10.dp))
 
@@ -288,19 +255,18 @@ private fun CodeTypeLayout(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-//                        CommentIcon()
-
+                        CommentIcon()
 
                         Spacer(modifier = Modifier.width(5.dp))
 
-//                        Text(
-//                            text = code.comments.size.toString(),
-//                            style = TextStyle(
-//                                fontSize = 14.sp,
-//                                fontWeight = FontWeight.Medium,
-//                                color = Color(0xFF9E9E9E) // calender_text color
-//                            )
-//                        )
+                        Text(
+                            text = code.comments.size.toString(),
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF9E9E9E)
+                            )
+                        )
                     }
                 }
             }
@@ -319,7 +285,6 @@ private fun CodeTypeLayout(
                     )
                 )
 
-
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Rating
@@ -327,10 +292,10 @@ private fun CodeTypeLayout(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        imageVector = StarIcon(),
+                        painter = painterResource(Res.drawable.star_icon),
                         contentDescription = "Rating",
                         modifier = Modifier.size(15.dp),
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.Yellow)
+//                        colorFilter = ColorFilter.tint(Color.Yellow)
                     )
 
                     Spacer(modifier = Modifier.width(10.dp))
@@ -354,7 +319,7 @@ private fun CodeTypeLayout(
                         style = TextStyle(
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF9E9E9E) // calender_text color
+                            color = Color(0xFF9E9E9E)
                         )
                     )
                 }
@@ -371,8 +336,15 @@ private fun PredictionTypeLayout(
     copyScale: Float,
     shareScale: Float
 ) {
+    // Create the same formatted text for both copy and share
+    val formattedCode = if (code.team1 != null && code.team2 != null) {
+        "${code.team1} vs ${code.team2} * ${code.text}"
+    } else {
+        code.text
+    }
+
     Column(
-        modifier = Modifier.padding( 20.dp)
+        modifier = Modifier.padding(20.dp)
     ) {
         // Top row with rating and date
         Row(
@@ -384,10 +356,10 @@ private fun PredictionTypeLayout(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    imageVector = StarIcon(),
+                    painter = painterResource(Res.drawable.copy_icon), // Using star icon if available
                     contentDescription = "Rating",
                     modifier = Modifier.size(15.dp),
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.Yellow)
+                    colorFilter = ColorFilter.tint(Color.Yellow)
                 )
 
                 Text(
@@ -428,13 +400,13 @@ private fun PredictionTypeLayout(
                 .fillMaxWidth()
                 .height(40.dp)
                 .background(
-                    Color.White.copy(.04f), // prediction_bg color
+                    Color.White.copy(.04f),
                     shape = RoundedCornerShape(8.dp)
                 )
                 .border(
                     width = 1.dp,
                     color = Color.White.copy(.24f),
-                    shape = RoundedCornerShape(8.dp) // outer rounded border
+                    shape = RoundedCornerShape(8.dp)
                 )
         ) {
             Row(
@@ -472,7 +444,7 @@ private fun PredictionTypeLayout(
 
                 // Odds
                 Text(
-                    text =   "${(round(code.odds * 10) / 10)} odds",
+                    text = "${(round(code.odds * 10) / 10)} odds",
                     style = TextStyle(
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
@@ -527,29 +499,19 @@ private fun PredictionTypeLayout(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val formattedCode = "${code.team1 ?: ""} vs ${code.team2 ?: ""} * ${code.text}"
-
-                // Copy button
-                Image(
-                    imageVector = CopyIcon(),
-                    contentDescription = "Copy",
-                    modifier = Modifier
-                        .scale(copyScale)
-                        .clickable { onCopy(formattedCode) },
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
+                // Copy button - uses formattedCode
+                CopyIcon(
+                    onCopy = { onCopy(formattedCode) },
+                    scale = copyScale
                 )
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-//                // Share button
-//                Image(
-//                    imageVector = ShareIcon(),
-//                    contentDescription = "Share",
-//                    modifier = Modifier
-//                        .scale(shareScale)
-//                        .clickable { onShare(formattedCode) },
-//                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
-//                )
+                // Share button - uses the SAME formattedCode as copy
+                ShareIcon(
+                    onShare = { onShare(formattedCode) },
+                    scale = shareScale
+                )
 
                 Spacer(modifier = Modifier.width(10.dp))
 
@@ -557,17 +519,17 @@ private fun PredictionTypeLayout(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-//                    CommentIcon()
+                    CommentIcon()
                     Spacer(modifier = Modifier.width(5.dp))
 
-//                    Text(
-//                        text = code.comments.size.toString(),
-//                        style = TextStyle(
-//                            fontSize = 14.sp,
-//                            fontWeight = FontWeight.Medium,
-//                            color = Color(0xFF9E9E9E)
-//                        )
-//                    )
+                    Text(
+                        text = code.comments.size.toString(),
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF9E9E9E)
+                        )
+                    )
                 }
             }
 
@@ -624,12 +586,6 @@ private fun PlatformImage(platform: String?) {
             modifier = Modifier.size(width = 80.dp, height = 23.dp),
             colorFilter = grayFilter
         )
-//        "1win" -> Image(
-//            painter = painterResource(Res.drawable._win),
-//            contentDescription = "1win",
-//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
-//            colorFilter = grayFilter
-//        )
         "sportybet" -> Image(
             painter = painterResource(Res.drawable.sportytext),
             contentDescription = "SportyBet",
@@ -666,37 +622,18 @@ private fun PlatformImage(platform: String?) {
             modifier = Modifier.size(width = 80.dp, height = 23.dp),
             colorFilter = grayFilter
         )
-//        "nairabet" -> Image(
-//            painter = painterResource(Res.drawable.nairabet),
-//            contentDescription = "NairaBet",
-//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
-//            colorFilter = grayFilter
-//        )
         "betfigo" -> Image(
             painter = painterResource(Res.drawable.betfigo),
             contentDescription = "BetFigo",
             modifier = Modifier.size(width = 80.dp, height = 23.dp),
             colorFilter = grayFilter
         )
-//        "melbet" -> Image(
-//            painter = painterResource(Res.drawable.melbet),
-//            contentDescription = "Melbet",
-//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
-//            colorFilter = grayFilter
-//        )
         "ng234bet" -> Image(
             painter = painterResource(Res.drawable.ng234bet),
             contentDescription = "NG234Bet",
             modifier = Modifier.size(width = 80.dp, height = 23.dp),
             colorFilter = grayFilter
         )
-//        "pinnacle" -> Image(
-//            painter = painterResource(Res.drawable.pinnacle),
-//            contentDescription = "Pinnacle",
-//            modifier = Modifier.size(width = 80.dp, height = 23.dp),
-//            colorFilter = grayFilter
-//        )
-
         else -> {
             if (!platform.isNullOrBlank()) {
                 Text(
@@ -713,42 +650,6 @@ private fun PlatformImage(platform: String?) {
         }
     }
 }
-
-//@Composable
-//private fun PlatformImage(platform: String?) {
-//    // This is a placeholder - you'll need to implement platform-specific images
-//    // For now, showing platform text if no specific image is available
-//    when (platform) {
-//        "sportybet" -> {
-//            // SportyBet logo placeholder
-//            Box(
-//                modifier = Modifier
-//                    .width(80.dp)
-//                    .height(23.dp)
-//                    .background(Color.Gray, RoundedCornerShape(4.dp)),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Text(
-//                    text = "SportyBet",
-//                    style = TextStyle(
-//                        fontSize = 10.sp,
-//                        color = Color.White
-//                    )
-//                )
-//            }
-//        }
-//        else -> {
-//            Text(
-//                text = platform ?: "",
-//                style = TextStyle(
-//                    fontSize = 16.sp,
-//                    fontWeight = FontWeight.Medium,
-//                    color = Color(0xFF7F7F7F)
-//                )
-//            )
-//        }
-//    }
-//}
 
 @Composable
 private fun CountryFlag(country: String?) {
@@ -768,6 +669,64 @@ private fun CountryFlag(country: String?) {
         contentDescription = country ?: "World",
         modifier = Modifier.size(16.dp),
         contentScale = ContentScale.Fit
+    )
+}
+
+@Composable
+private fun CopyIcon(onCopy: () -> Unit, scale: Float) {
+    Image(
+        painter = painterResource(Res.drawable.copy_icon),
+        contentDescription = "Copy",
+        modifier = Modifier
+            .size(22.dp)
+            .scale(scale)
+            .clickable(
+                indication = null, // Remove ripple effect
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            ) { onCopy() }
+    )
+}
+
+@Composable
+private fun ShareIcon(onShare: () -> Unit, scale: Float) {
+    Image(
+        painter = painterResource(Res.drawable.share_icon),
+        contentDescription = "Share",
+        modifier = Modifier
+            .size(22.dp)
+            .scale(scale)
+            .clickable(
+                indication = null, // Remove ripple effect
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            ) { onShare() }
+    )
+}
+
+@Composable
+private fun CommentIcon() {
+    Image(
+        painter = painterResource(Res.drawable.comment_icon),
+        contentDescription = "Comment",
+        modifier = Modifier
+            .size(22.dp)
+            .clickable(
+                indication = null, // Remove ripple effect
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            ) { /* Handle comment click */ }
+    )
+}
+
+@Composable
+private fun StarIcon() {
+    Image(
+        painter = painterResource(Res.drawable.star_icon),
+        contentDescription = "Comment",
+        modifier = Modifier
+            .size(16.dp)
+            .clickable(
+                indication = null, // Remove ripple effect
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            ) { /* Handle comment click */ }
     )
 }
 
@@ -801,155 +760,3 @@ private fun formatDate(dateString: String): String {
         dateString
     }
 }
-
-// Placeholder icon composables - replace with your actual icons
-@Composable
-private fun CopyIcon() = androidx.compose.material.icons.Icons.Default.ContentCopy
-
-@Composable
-private fun ShareIcon() = androidx.compose.material.icons.Icons.Default.Share
-
-//@Composable
-//private fun CommentIcon(){
-//    Image(
-//        painter = painterResource(Res.drawable.Icon_comment), // 🔹 replace with your drawable name
-//        contentDescription = "Comment",
-//        modifier = Modifier.size(20.dp) // optional: adjust size
-//    )
-//}
-//} = androidx.compose.material.icons.Icons.Default.Comment.tintColor
-
-@Composable
-private fun StarIcon() = androidx.compose.material.icons.Icons.Default.Star
-
-
-
-//@Composable
-//fun CodeItem(
-//    code: Code,
-//    modifier: Modifier = Modifier
-//) {
-//    Card(
-//        modifier = modifier
-//            .fillMaxWidth()
-//            .clip(RoundedCornerShape(12.dp)),
-//        colors = CardDefaults.cardColors(
-//            containerColor = Color(0xFF2A2A2A)
-//        )
-//    ) {
-//        Column(
-//            modifier = Modifier.padding(16.dp)
-//        ) {
-//            // Header with username and odds
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                ) {
-//                    Text(
-//                        text = code.username ?: "",
-//                        color = Color(0xFF888888),
-//                        fontSize = 14.sp
-//                    )
-//
-//                    // Online indicator
-//                    Box(
-//                        modifier = Modifier
-//                            .size(8.dp)
-//                            .background(Color(0xFF4CAF50), RoundedCornerShape(4.dp))
-//                    )
-//                }
-//
-//                Text(
-//                    text = "${code.odds} odds",
-//                    color = Color.White,
-//                    fontSize = 16.sp,
-//                    fontWeight = FontWeight.Bold
-//                )
-//            }
-//
-//            Spacer(modifier = Modifier.height(12.dp))
-//
-//            // Code text
-//            Text(
-//                text = code.text,
-//                color = Color.White,
-//                fontSize = 18.sp,
-//                fontWeight = FontWeight.Bold
-//            )
-//
-//            Spacer(modifier = Modifier.height(12.dp))
-//
-//            // Rating and actions
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Star,
-//                        contentDescription = "Rating",
-//                        tint = Color(0xFFFFD700),
-//                        modifier = Modifier.size(16.dp)
-//                    )
-//                    Text(
-//                        text = code.rating.toString(),
-//                        color = Color.White,
-//                        fontSize = 14.sp
-//                    )
-//                }
-//
-//                Row(
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Phone,
-//                        contentDescription = "Phone",
-//                        tint = Color(0xFF888888),
-//                        modifier = Modifier.size(20.dp)
-//                    )
-//                    Icon(
-//                        imageVector = Icons.Default.Edit,
-//                        contentDescription = "Edit",
-//                        tint = Color(0xFF888888),
-//                        modifier = Modifier.size(20.dp)
-//                    )
-//                    Row(
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Default.Comment,
-//                            contentDescription = "Comments",
-//                            tint = Color(0xFF888888),
-//                            modifier = Modifier.size(20.dp)
-//                        )
-//                        Text(
-//                            text = "1268",
-//                            color = Color(0xFF888888),
-//                            fontSize = 12.sp
-//                        )
-//                    }
-//                }
-//            }
-//
-//            Spacer(modifier = Modifier.height(8.dp))
-//
-//            // Time
-//            Text(
-//                text = "27 hrs",
-//                color = Color(0xFF888888),
-//                fontSize = 12.sp,
-//                modifier = Modifier.align(Alignment.End)
-//            )
-//        }
-//    }
-//}

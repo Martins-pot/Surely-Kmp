@@ -7,6 +7,8 @@ import com.sportmaster.surelykmp.core.data.remote.Result
 import com.sportmaster.surelykmp.core.domain.usecase.SendOtpUseCase
 import com.sportmaster.surelykmp.core.domain.usecase.VerifyOtpUseCase
 import com.sportmaster.surelykmp.activities.profile.domain.repository.ProfileRepository
+import com.sportmaster.surelykmp.core.domain.usecase.CheckEmailExistsUseCase
+import com.sportmaster.surelykmp.core.domain.usecase.SendOtpByEmailUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,8 +26,8 @@ data class ForgotPasswordState(
     val isConfirmEnabled: Boolean = false,
     val showOtpScreen: Boolean = false,
     val resendCountdown: Int = 0,
-    val resendCount: Int = 0,
-    val username: String? = null
+    val resendCount: Int = 0
+    // Removed: username field is no longer needed
 )
 
 sealed interface ForgotPasswordAction {
@@ -45,7 +47,9 @@ sealed interface ForgotPasswordEvent {
 class ForgotPasswordViewModel(
     private val repository: ProfileRepository,
     private val sendOtpUseCase: SendOtpUseCase,
-    private val verifyOtpUseCase: VerifyOtpUseCase
+    private val verifyOtpUseCase: VerifyOtpUseCase,
+    private val checkEmailExistsUseCase: CheckEmailExistsUseCase,
+    private val sendOtpByEmailUseCase: SendOtpByEmailUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ForgotPasswordState())
@@ -101,20 +105,24 @@ class ForgotPasswordViewModel(
             }
 
             try {
-                // First, check if email exists by fetching user details
-                val userResult = repository.getUserByEmail(_state.value.email)
-
-                when (userResult) {
+                // Check if email exists using the new endpoint
+                when (val existsResult = checkEmailExistsUseCase(_state.value.email)) {
                     is Result.Success -> {
-                        val username = userResult.data.userName ?: ""
-                        _state.update { it.copy(username = username) }
+                        if (!existsResult.data) {
+                            // Email doesn't exist
+                            _state.update {
+                                it.copy(
+                                    isLoading = false,
+                                    emailError = "Email not found"
+                                )
+                            }
+                            eventChannel.send(ForgotPasswordEvent.ShowError("Email not found"))
+                            return@launch
+                        }
 
-                        // Now send OTP
-                        when (val otpResult = sendOtpUseCase(
-                            email = _state.value.email,
-                            username = username
-                        )) {
-                            is Result.Success -> {
+                        // Email exists, send OTP directly without needing username
+                        when (val otpResult = sendOtpByEmailUseCase(_state.value.email)) {
+                            is Result.Success<*> -> {
                                 _state.update {
                                     it.copy(
                                         isLoading = false,
@@ -140,10 +148,10 @@ class ForgotPasswordViewModel(
                         _state.update {
                             it.copy(
                                 isLoading = false,
-                                emailError = "Email not found"
+                                emailError = "Error checking email"
                             )
                         }
-                        eventChannel.send(ForgotPasswordEvent.ShowError("Email not found"))
+                        eventChannel.send(ForgotPasswordEvent.ShowError("Error checking email"))
                     }
                 }
             } catch (e: Exception) {
@@ -153,6 +161,47 @@ class ForgotPasswordViewModel(
                         emailError = "An error occurred"
                     )
                 }
+                eventChannel.send(ForgotPasswordEvent.ShowError("An error occurred: ${e.message}"))
+            }
+        }
+    }
+
+    private fun resendOtp() {
+        if (_state.value.resendCount >= 4) {
+            viewModelScope.launch {
+                eventChannel.send(ForgotPasswordEvent.ShowError("Maximum resend attempts reached. Try again later."))
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isLoading = true,
+                    loadingMessage = "Requesting"
+                )
+            }
+
+            try {
+                // Use email-only OTP sending for resend as well
+                when (val result = sendOtpByEmailUseCase(_state.value.email)) {
+                    is Result.Success<*> -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                resendCount = it.resendCount + 1
+                            )
+                        }
+                        startResendCountdown()
+                        eventChannel.send(ForgotPasswordEvent.ShowSuccess("OTP resent successfully"))
+                    }
+                    is Result.Error<*> -> {
+                        _state.update { it.copy(isLoading = false) }
+                        eventChannel.send(ForgotPasswordEvent.ShowError("Failed to resend OTP"))
+                    }
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false) }
                 eventChannel.send(ForgotPasswordEvent.ShowError("An error occurred: ${e.message}"))
             }
         }
@@ -195,46 +244,46 @@ class ForgotPasswordViewModel(
         }
     }
 
-    private fun resendOtp() {
-        if (_state.value.resendCount >= 4) {
-            viewModelScope.launch {
-                eventChannel.send(ForgotPasswordEvent.ShowError("Maximum resend attempts reached. Try again later."))
-            }
-            return
-        }
-
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true,
-                    loadingMessage = "Requesting"
-                )
-            }
-
-            try {
-                val username = _state.value.username ?: ""
-                when (val result = sendOtpUseCase(_state.value.email, username)) {
-                    is Result.Success -> {
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                resendCount = it.resendCount + 1
-                            )
-                        }
-                        startResendCountdown()
-                        eventChannel.send(ForgotPasswordEvent.ShowSuccess("OTP resent successfully"))
-                    }
-                    is Result.Error -> {
-                        _state.update { it.copy(isLoading = false) }
-                        eventChannel.send(ForgotPasswordEvent.ShowError("Failed to resend OTP"))
-                    }
-                }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false) }
-                eventChannel.send(ForgotPasswordEvent.ShowError("An error occurred: ${e.message}"))
-            }
-        }
-    }
+//    private fun resendOtp() {
+//        if (_state.value.resendCount >= 4) {
+//            viewModelScope.launch {
+//                eventChannel.send(ForgotPasswordEvent.ShowError("Maximum resend attempts reached. Try again later."))
+//            }
+//            return
+//        }
+//
+//        viewModelScope.launch {
+//            _state.update {
+//                it.copy(
+//                    isLoading = true,
+//                    loadingMessage = "Requesting"
+//                )
+//            }
+//
+//            try {
+//                val username = _state.value.username ?: ""
+//                when (val result = sendOtpUseCase(_state.value.email, username)) {
+//                    is Result.Success -> {
+//                        _state.update {
+//                            it.copy(
+//                                isLoading = false,
+//                                resendCount = it.resendCount + 1
+//                            )
+//                        }
+//                        startResendCountdown()
+//                        eventChannel.send(ForgotPasswordEvent.ShowSuccess("OTP resent successfully"))
+//                    }
+//                    is Result.Error -> {
+//                        _state.update { it.copy(isLoading = false) }
+//                        eventChannel.send(ForgotPasswordEvent.ShowError("Failed to resend OTP"))
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                _state.update { it.copy(isLoading = false) }
+//                eventChannel.send(ForgotPasswordEvent.ShowError("An error occurred: ${e.message}"))
+//            }
+//        }
+//    }
 
     private fun startResendCountdown() {
         val countdownTime = if (_state.value.resendCount == 1) 30 else 50
